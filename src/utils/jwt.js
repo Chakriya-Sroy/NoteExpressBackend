@@ -7,7 +7,7 @@ export const generateAccessToken = async (user) => {
   return await new jose.SignJWT({
     id: user.id,
     email: user.email,
-    role: user.role,
+    role_id: user.role_id,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -19,7 +19,7 @@ export const generateRefreshToken = async (user) => {
   return await new jose.SignJWT({
     id: user.id,
     email: user.email,
-    role: user.role,
+    role_id: user.role_id,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

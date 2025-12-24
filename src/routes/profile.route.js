@@ -1,6 +1,6 @@
 import express from "express";
 import { AuthenticateMiddlware } from "../middlewares/authenticate.middleware.js";
-import { findUserPassword, updateUserPassword } from "../models/auth.model.js";
+import { findUserPassword, updateUserPassword } from "../models/user.model.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
 import { ChangePasswordSchema } from "../schema/profile.schema.js";
 
