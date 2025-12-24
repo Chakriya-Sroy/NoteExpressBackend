@@ -1,12 +1,20 @@
 import express from "express";
 import { AuthSchema, RefreshTokenSchema } from "../schema/auth.schema.js";
-import { findUserByEmail, insertUser } from "../models/auth.model.js";
+import {
+  activateUser,
+  deactivateUser,
+  findUserByEmail,
+  findUserById,
+  insertUser,
+} from "../models/user.model.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
 import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt.js";
+import { AdminPermissionsMiddleware } from "../middlewares/permissions.middleware.js";
+import { AuthenticateMiddlware } from "../middlewares/authenticate.middleware.js";
 
 const route = express.Router();
 
@@ -42,9 +50,7 @@ route.post("/signin", async (req, res) => {
       accessToken: access_token,
       refreshToken: refresh_token,
     });
-    
   } catch (err) {
-
     if (err.name === "ValidationError") {
       return res.status(400).send({ error: err.errors[0] });
     }
@@ -67,9 +73,9 @@ route.post("/login", async (req, res) => {
     if (!existingUser) {
       return res.status(400).send({ error: "User not found" });
     }
-     
-    if(existingUser.status === 'inactive'){
-      return  res.status(403).send({ error: "User account is deactivated" });
+
+    if (existingUser?.status === "inactive") {
+      return res.status(403).send({ error: "User account is deactivated" });
     }
     // Verify Password
     const correctPassword = await verifyPassword(
@@ -80,7 +86,7 @@ route.post("/login", async (req, res) => {
     if (!correctPassword) {
       return res.status(400).send({ error: "Invalid Credentials" });
     }
- 
+
     // Generate Tokens
     const access_token = await generateAccessToken(existingUser);
     const refresh_token = await generateRefreshToken(existingUser);
@@ -90,9 +96,7 @@ route.post("/login", async (req, res) => {
       accessToken: access_token,
       refreshToken: refresh_token,
     });
-
   } catch (err) {
-
     if (err.name === "ValidationError") {
       return res.status(400).send({ error: err.errors[0] });
     }
@@ -105,7 +109,6 @@ route.post("/login", async (req, res) => {
 
 route.post("/refresh-access-token", async (req, res) => {
   try {
-
     await RefreshTokenSchema.validate(req.body);
 
     const decoded = await verifyRefreshToken(req.body?.refreshToken);
@@ -113,18 +116,16 @@ route.post("/refresh-access-token", async (req, res) => {
     const access_token = await generateAccessToken({
       id: decoded.payload.id,
       email: decoded.payload.email,
-      role: decoded.payload.role,
+      role_id: decoded.payload.role_id,
     });
 
     return res.status(200).send({ access_token });
-
   } catch (err) {
-
     if (err.name === "ValidationError") {
       return res.status(400).send({ error: err.errors[0] });
     }
 
-    if(err?.name ==='JWSInvalid'){
+    if (err?.name === "JWSInvalid") {
       return res.status(401).send({ error: "Invalid refresh token" });
     }
 
@@ -134,5 +135,59 @@ route.post("/refresh-access-token", async (req, res) => {
   }
 });
 
+route.post(
+  "/deactivate-user/:id",
+  AuthenticateMiddlware,
+  AdminPermissionsMiddleware,
+  async (req, res) => {
+    const id = req.params.id;
 
+    try {
+      const existingUser = await findUserById(id);
+      if (!existingUser) {
+        return res.status(400).send({ error: "User with that id not found" });
+      }
+
+      if (existingUser?.role_id === 1) {
+        return res.status(403).send({ error: "Cannot deactivate admin user" });
+      }
+
+      await deactivateUser(existingUser?.email);
+
+      return res.status(200).send({ message: "User deactivated successfully" });
+    } catch (err) {
+      return res
+        .status(400)
+        .send({ error: err?.message || "Internal Server Error" });
+    }
+  }
+);
+
+route.post(
+  "/activate-user/:id",
+  AuthenticateMiddlware,
+  AdminPermissionsMiddleware,
+  async (req, res) => {
+    const id = req.params.id;
+
+    try {
+      const existingUser = await findUserById(id);
+      if (!existingUser) {
+        return res.status(400).send({ error: "User with that id not found" });
+      }
+
+      if (existingUser?.role_id === 1) {
+        return res.status(403).send({ error: "Cannot activate admin user" });
+      }
+
+      await activateUser(existingUser?.email);
+
+      return res.status(200).send({ message: "User activated successfully" });
+    } catch (err) {
+      return res
+        .status(400)
+        .send({ error: err?.message || "Internal Server Error" });
+    }
+  }
+);
 export default route;
