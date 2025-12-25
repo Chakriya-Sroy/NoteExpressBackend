@@ -4,6 +4,11 @@ import { findUserPassword, updateUserPassword } from "../models/user.model.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
 import { ChangePasswordSchema } from "../schema/profile.schema.js";
 import { useResponse } from "../utils/response.js";
+import { RecordActivityLog } from "../models/activity.model.js";
+import {
+  ActivityLogAction,
+  ActivityLogModule,
+} from "../constants/action.constant.js";
 
 const route = express.Router();
 
@@ -37,6 +42,12 @@ route.put("/change-password", async (req, res) => {
 
     await updateUserPassword(email, newHashedPassword);
 
+    await RecordActivityLog({
+      module: ActivityLogModule.PROFILE,
+      action: ActivityLogAction.PROFILE_RESET_PASSWORD,
+      userId: req.user?.id,
+    });
+    
     return useResponse(res, { message: "Password changed successfully" });
   } catch (err) {
     if (err.name === "ValidationError") {

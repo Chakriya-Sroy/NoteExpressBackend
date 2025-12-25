@@ -8,6 +8,11 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt.js";
 import { useResponse } from "../utils/response.js";
+import { RecordActivityLog } from "../models/activity.model.js";
+import {
+  ActivityLogAction,
+  ActivityLogModule,
+} from "../constants/action.constant.js";
 
 const route = express.Router();
 
@@ -38,6 +43,12 @@ route.post("/signin", async (req, res) => {
 
     const access_token = await generateAccessToken(newUser);
     const refresh_token = await generateRefreshToken(newUser);
+
+    await RecordActivityLog({
+      module: ActivityLogModule.AUTH,
+      action: ActivityLogAction.AUTH_SIGNUP,
+      userId: newUser?.id,
+    });
 
     return useResponse(res, {
       message: "Signin successfully",
@@ -87,6 +98,12 @@ route.post("/login", async (req, res) => {
     // Generate Tokens
     const access_token = await generateAccessToken(existingUser);
     const refresh_token = await generateRefreshToken(existingUser);
+
+    await RecordActivityLog({
+      module: ActivityLogModule.AUTH,
+      action: ActivityLogAction.AUTH_LOGIN,
+      userId: existingUser?.id,
+    });
 
     return useResponse(res, {
       message: "Login successful",

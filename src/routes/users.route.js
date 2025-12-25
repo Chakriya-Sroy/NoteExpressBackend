@@ -10,6 +10,11 @@ import {
 } from "../models/user.model.js";
 import { hashPassword } from "../utils/password.js";
 import { useResponse } from "../utils/response.js";
+import { RecordActivityLog } from "../models/activity.model.js";
+import {
+  ActivityLogAction,
+  ActivityLogModule,
+} from "../constants/action.constant.js";
 
 const route = express.Router();
 
@@ -52,7 +57,28 @@ route.put(
         });
       }
 
+      if (existingUser?.status === "inactive") {
+        return useResponse(res, {
+          code: 409,
+          message: "The user account is already in an inactive state.",
+        });
+      }
+
       await deactivateUser(existingUser?.email);
+
+      await RecordActivityLog({
+        module: ActivityLogModule.USER,
+        action: ActivityLogAction.USER_DEACTIVATED,
+        userId: req.user?.id,
+        metadata: {
+          old: {
+            status: existingUser?.status,
+          },
+          new: {
+            status: "inactive",
+          },
+        },
+      });
 
       return useResponse(res, { message: "User deactivated successfully" });
     } catch (err) {
@@ -87,7 +113,28 @@ route.put(
         });
       }
 
+      if (existingUser?.status === "active") {
+        return useResponse(res, {
+          code: 409,
+          message: "The user account is already in an active state.",
+        });
+      }
+
       await activateUser(existingUser?.email);
+
+      await RecordActivityLog({
+        module: ActivityLogModule.USER,
+        action: ActivityLogAction.USER_ACTIVATED,
+        userId: req.user?.id,
+        metadata: {
+          old: {
+            status: existingUser?.status,
+          },
+          new: {
+            status: "active",
+          },
+        },
+      });
 
       return useResponse(res, { message: "User activated successfully" });
     } catch (err) {
@@ -133,7 +180,14 @@ route.put(
 
       await resetUserPassword(existingUser?.id, newHashedPassword);
 
+      await RecordActivityLog({
+        module: ActivityLogModule.USER,
+        action: ActivityLogAction.USER_RESET_PASSWORD,
+        userId: req.user?.id,
+      });
+
       return useResponse(res, { message: "User password reset successfully" });
+
     } catch (err) {
       return useResponse(res, {
         code: 500,
