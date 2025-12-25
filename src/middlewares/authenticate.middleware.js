@@ -20,9 +20,9 @@ export const AuthenticateMiddlware = async (req, res, next) => {
     }
 
     // Attach user info to request
-    const { status } = await getUserStatusById(payload?.data?.id);
+    const res = await getUserStatusById(payload?.data?.id);
 
-    if (status === "inactive") {
+    if (res?.status && res?.status === "inactive") {
       return res.status(404).json({
         message: "Account is inactive. Please contact administrator.",
       });
