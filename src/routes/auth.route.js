@@ -6,6 +6,7 @@ import {
   findUserByEmail,
   findUserById,
   insertUser,
+  resetUserPassword,
 } from "../models/user.model.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
 import {
@@ -135,7 +136,7 @@ route.post("/refresh-access-token", async (req, res) => {
   }
 });
 
-route.post(
+route.put(
   "/deactivate-user/:id",
   AuthenticateMiddlware,
   AdminPermissionsMiddleware,
@@ -163,7 +164,7 @@ route.post(
   }
 );
 
-route.post(
+route.put(
   "/activate-user/:id",
   AuthenticateMiddlware,
   AdminPermissionsMiddleware,
@@ -190,4 +191,40 @@ route.post(
     }
   }
 );
+
+route.put(
+  "/reset-password",
+  AuthenticateMiddlware,
+  AdminPermissionsMiddleware,
+  async (req, res) => {
+    const id = req.body?.user_id;
+
+    if (!id) {
+      return res.status(400).send({ error: "User id is required" });
+    }
+    
+    try {
+      const existingUser = await findUserById(id);
+
+      if (!existingUser) {
+        return res.status(400).send({ error: "User with that id not found" });
+      }
+
+      const password = "Default@123";
+
+      const newHashedPassword = await hashPassword(password);
+
+      await resetUserPassword(existingUser?.id, newHashedPassword);
+
+      return res
+        .status(200)
+        .send({ message: "User password reset successfully" });
+    } catch (err) {
+      return res
+        .status(400)
+        .send({ error: err?.message || "Internal Server Error" });
+    }
+  }
+);
+
 export default route;

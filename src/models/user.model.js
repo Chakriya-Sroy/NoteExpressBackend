@@ -96,15 +96,32 @@ export const activateUser = async (email) => {
   return data;
 };
 
+export const resetUserPassword=async(id,newHashedPassword)=>{
+  const { data, error } = await supabase
+    .from("users")
+    .update({ password: newHashedPassword })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error("Internal Server Error");
+  }
+  return data;
+}
+
 export const getAllUsers = async (routeQuery) => {
   const pageNumber = Number(routeQuery?.page) || 1;
   const pageSize = Number(routeQuery?.limit) || 10;
   const start = (pageNumber - 1) * pageSize;
   const end = start + pageSize - 1;
-  
+
+  const allStatus=['active','inactive'];
+
   const searchTerm = routeQuery?.search && String(routeQuery.search).trim() !== "" 
     ? String(routeQuery.search).trim() 
     : "";
+  const status=routeQuery?.status && String(routeQuery.status).trim() !== "";
 
   let query = supabase
     .from("users")
@@ -114,6 +131,10 @@ export const getAllUsers = async (routeQuery) => {
     query = query.or(`email.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%`);
   }
 
+  if(status&& allStatus.includes(routeQuery?.status)){
+    query = query.eq('status',routeQuery?.status);
+  }
+  
   query = query.range(start, end);
 
   const { data, count, error } = await query;
@@ -133,3 +154,16 @@ export const getAllUsers = async (routeQuery) => {
 
   return { data: data || [], meta };
 };
+
+export const getUserStatusById = async (id) => {
+  const { data, error } = await supabase
+    .from("users")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    return null;
+  }
+  return data;
+}

@@ -11,15 +11,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-app.use("/health", (req, res) => {
+app.use("/api/health", (req, res) => {
   return res.status(200).send({ message: "API is healthy" });
 });
 
-app.use("/auth", routeAuth);
+app.use("/api/auth", routeAuth);
 
-app.use("/profile", routeProfile);
+app.use("/api/profile", routeProfile);
 
-app.use("/users", routeUsers);
+app.use("/api/users", routeUsers);
 
 app.use((req, res) => {
   return res.status(404).send({ error: "Route not found" });

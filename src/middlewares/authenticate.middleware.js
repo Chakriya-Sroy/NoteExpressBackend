@@ -1,4 +1,4 @@
-
+import { getUserStatusById } from "../models/user.model.js";
 import { verifyAccessToken } from "../utils/jwt.js";
 // Middleware to verify token
 export const AuthenticateMiddlware = async (req, res, next) => {
@@ -11,10 +11,22 @@ export const AuthenticateMiddlware = async (req, res, next) => {
     const token = authHeader.replace(/^Bearer\s+/i, "");
 
     const { payload } = await verifyAccessToken(token);
-    
-    // Attach user info to request
+
     req.user = payload;
 
+    // Admin
+    if (payload?.data?.role_id == 1) {
+      next();
+    }
+
+    // Attach user info to request
+    const { status } = await getUserStatusById(payload?.data?.id);
+
+    if (status === "inactive") {
+      return res.status(404).json({
+        message: "Account is inactive. Please contact administrator.",
+      });
+    }
     next(); // move to the next handler
   } catch (err) {
     console.error("Token verification failed:", err);
