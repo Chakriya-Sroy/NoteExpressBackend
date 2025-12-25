@@ -1,21 +1,21 @@
 import * as yup from "yup";
 
 export const ChangePasswordSchema = yup.object().shape({
-  oldPassword: yup
+  old_password: yup
     .string()
     .min(8, "Minimum password length is 8 characters")
     .max(20, "Maximum password length is 20 characters")
     .required("Old password is required"),
 
-  newPassword: yup
+  new_password: yup
     .string()
     .min(8, "Minimum password length is 8 characters")
     .max(20, "Maximum password length is 20 characters")
     .required("New password is required"),
 
-  confirmNewPassword: yup
+  confirm_new_password: yup
     .string()
-    .oneOf([yup.ref("newPassword"), null], "New Passwords and Confirm Password must match")
+    .oneOf([yup.ref("new_password"), null], "New Passwords and Confirm Password must match")
     .required("Please confirm your new password"),
 });
 
