@@ -1,12 +1,13 @@
 import { getUserStatusById } from "../models/user.model.js";
 import { verifyAccessToken } from "../utils/jwt.js";
+import { useResponse } from "../utils/response.js";
 // Middleware to verify token
 export const AuthenticateMiddlware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
     if (!authHeader)
-      return res.status(401).json({ message: "No token provided" });
+      return useResponse(res, { code: 401, message: "No token provided" });
 
     const token = authHeader.replace(/^Bearer\s+/i, "");
 
@@ -23,13 +24,14 @@ export const AuthenticateMiddlware = async (req, res, next) => {
     const res = await getUserStatusById(payload?.data?.id);
 
     if (res?.status && res?.status === "inactive") {
-      return res.status(404).json({
+      return useResponse(res, {
+        code: 404,
         message: "Account is inactive. Please contact administrator.",
       });
     }
     next(); // move to the next handler
   } catch (err) {
     console.error("Token verification failed:", err);
-    return res.status(401).json({ message: "Invalid or expired token" });
+    return useResponse(res, { code: 401, message: "Invalid or expired token" });
   }
 };
