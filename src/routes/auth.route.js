@@ -17,12 +17,10 @@ import {
 const route = express.Router();
 
 route.post("/signin", async (req, res) => {
-  const { email, password } = req.body;
-
   // Validate Input
   try {
     await AuthSchema.validate(req.body);
-
+    const { email, password } = req.body;
     const existingUser = await findUserByEmail(email);
 
     if (existingUser) {
@@ -67,11 +65,11 @@ route.post("/signin", async (req, res) => {
 });
 
 route.post("/login", async (req, res) => {
-  const { email, password } = req.body;
   try {
     // Validate Input
     await AuthSchema.validate(req.body);
-
+    
+    const { email, password } = req.body;
     // Check if User Exists
     const existingUser = await findUserByEmail(email);
 
