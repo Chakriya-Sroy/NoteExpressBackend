@@ -4,13 +4,18 @@ import routeAuth from "./routes/auth.route.js";
 import routeProfile from "./routes/profile.route.js";
 import routeUsers from "./routes/users.route.js";
 import { useResponse } from "./utils/response.js";
-
+import cors from "cors";
 dotev.config();
-const app = express();
 
+const allowedOrigins = [
+  "http://localhost:3001",
+  "https://qr-attendance-kwl6.vercel.app",
+];
+
+const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use("/api/health", (req, res) => {
   return useResponse(res, { message: "API is healthy" });
 });

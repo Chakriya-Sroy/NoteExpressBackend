@@ -4,7 +4,8 @@ export const ActivityLogAction = {
   PROFILE_RESET_PASSWORD: "profile.change-password",
   USER_ACTIVATED: "user.activated",
   USER_DEACTIVATED: "user.deactivated",
-  USER_RESET_PASSWORD:"user.reset-password"
+  USER_RESET_PASSWORD:"user.reset-password",
+  USER_CREATE:"user.create"
 };
 
 

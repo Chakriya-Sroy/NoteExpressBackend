@@ -4,6 +4,7 @@ import { AdminPermissionsMiddleware } from "../middlewares/permissions.middlewar
 import {
   activateUser,
   deactivateUser,
+  findUserByEmail,
   findUserById,
   getAllUsers,
   resetUserPassword,
@@ -15,6 +16,8 @@ import {
   ActivityLogAction,
   ActivityLogModule,
 } from "../constants/action.constant.js";
+import { AuthSchema } from "../schema/auth.schema.js";
+import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
 
 const route = express.Router();
 
@@ -27,6 +30,52 @@ route.get("/", async (req, res) => {
     const { data, meta } = await getAllUsers(req?.query);
     return useResponse(res, { data, meta });
   } catch (err) {
+    return useResponse(res, {
+      code: 500,
+      message: err?.message || "Internal Server Error",
+    });
+  }
+});
+
+route.post("", async (req, res) => {
+  try {
+
+    await AuthSchema(req.body);
+    const existingUser = await findUserByEmail(email);
+
+    if (existingUser) {
+      return useResponse(res, {
+        code: 400,
+        message: "User already exists with this email",
+      });
+    }
+
+    const password=req?.body?.password ?? 'Default@123';
+    
+    const password_hash = await hashPassword(password);
+
+    const newUser = await insertUser({
+      email,
+      password: password_hash,
+      role_id: req.body.role_id || 3,
+      username: req.body.username || email.split("@")[0],
+    });
+
+    await RecordActivityLog({
+      module: ActivityLogModule.AUTH,
+      action: ActivityLogAction.AUTH_SIGNUP,
+      userId: newUser?.id,
+    });
+
+    return useResponse(res, {
+      message: "Signin successfully",
+      data: newUser,
+    });
+  } catch (err) {
+    if (err.name === "ValidationError") {
+      return useResponse(res, { code: 400, message: err.errors[0] });
+    }
+
     return useResponse(res, {
       code: 500,
       message: err?.message || "Internal Server Error",
@@ -187,7 +236,6 @@ route.put(
       });
 
       return useResponse(res, { message: "User password reset successfully" });
-
     } catch (err) {
       return useResponse(res, {
         code: 500,
