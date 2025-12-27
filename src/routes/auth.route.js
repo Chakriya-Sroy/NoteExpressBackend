@@ -25,7 +25,7 @@ route.post("/signin", async (req, res) => {
 
     if (existingUser) {
       return useResponse(res, {
-        code: 400,
+        code: 409,
         message: "User already exists with this email",
       });
     }
@@ -74,7 +74,7 @@ route.post("/login", async (req, res) => {
     const existingUser = await findUserByEmail(email);
 
     if (!existingUser) {
-      return useResponse(res, { code: 400, message: "User not found" });
+      return useResponse(res, { code: 401, message: "User not found" });
     }
 
     if (existingUser?.status === "inactive") {
@@ -90,7 +90,7 @@ route.post("/login", async (req, res) => {
     );
 
     if (!correctPassword) {
-      return useResponse(res, { code: 400, message: "Invalid Credentials" });
+      return useResponse(res, { code: 401, message: "Invalid Credentials" });
     }
 
     // Generate Tokens
