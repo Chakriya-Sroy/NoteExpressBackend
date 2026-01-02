@@ -23,3 +23,13 @@ export const RecordActivityLog = async ({
   }
   return true;
 };
+
+export const getActivityLog = async () => {
+  const { data, error } = await supabase.from("activity_logs").select('*');
+  if (error) {
+    console.log("error");
+    throw error;
+  }
+  console.log('data',data)
+  return data;
+};
