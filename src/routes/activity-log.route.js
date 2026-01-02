@@ -12,9 +12,10 @@ route.use(AdminPermissionsMiddleware);
 
 route.get("/", async (req, res) => {
   try {
-    const data = await getActivityLog();
+    const { data, meta } = await getActivityLog(req.query);
     return useResponse(res, {
       code: 202,
+      meta: meta,
       data: data,
     });
   } catch (err) {
