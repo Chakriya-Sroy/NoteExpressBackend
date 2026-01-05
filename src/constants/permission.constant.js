@@ -1,6 +1,6 @@
 
 
-const USER = {
+export const USER = {
   VIEW: "user:view",
   CREATE: "user:create",
   UPDATE: "user:update",
@@ -10,11 +10,11 @@ const USER = {
   PASSWORD: "user:reset_password",
 };
 
-const ACTIVITYLOG={
+export const ACTIVITYLOG={
     VIEW:"activity_log:view"
 }
 
-export const PERMISSIONS = {
-    USER,
-    ACTIVITYLOG
-};
+export const PERMISSIONS = [
+  ...Object.values(USER),
+  ...Object.values(ACTIVITYLOG)
+]
