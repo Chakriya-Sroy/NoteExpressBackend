@@ -1,5 +1,6 @@
 import * as jose from "jose";
 import dotenv from "dotenv";
+import { PERMISSIONS } from "../constants/permission.constant.js";
 
 dotenv.config();
 
@@ -8,6 +9,7 @@ export const generateAccessToken = async (user) => {
     id: user.id,
     email: user.email,
     role_id: user.role_id,
+    permissions: user.role_id === 1 ? PERMISSIONS : {},
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -20,6 +22,7 @@ export const generateRefreshToken = async (user) => {
     id: user.id,
     email: user.email,
     role_id: user.role_id,
+    permissions: user.role_id === 1 ? PERMISSIONS : {},
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

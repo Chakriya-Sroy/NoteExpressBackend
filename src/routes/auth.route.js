@@ -129,6 +129,7 @@ route.post("/refresh-access-token", async (req, res) => {
       id: decoded.payload.id,
       email: decoded.payload.email,
       role_id: decoded.payload.role_id,
+      permission:decoded.payload.permissions
     });
 
     return useResponse(res, { data: { accessToken } });
