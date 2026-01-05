@@ -125,7 +125,7 @@ export const getAllUsers = async (routeQuery) => {
 
   let query = supabase
     .from("users")
-    .select("id, username, email, role_id, status", { count: "exact" });
+    .select("id, username, email, role_id,roles(role_name), status" , { count: "exact" });
 
   if (searchTerm !== "") {
     query = query.or(`email.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%`);
@@ -148,7 +148,7 @@ export const getAllUsers = async (routeQuery) => {
   };
 
   if (error) {
-
+    console.log('error',error)
     return { data: [], meta };
   }
 
