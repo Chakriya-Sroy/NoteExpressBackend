@@ -30,7 +30,7 @@ export const getActivityLog = async (routeQuery) => {
   const start = (pageNumber - 1) * pageSize;
   const end = start + pageSize - 1;
 
-  let query = supabase.from("activity_logs").select("*", { count: "exact" });
+  let query = supabase.from("activity_logs").select("*,users(username)", { count: "exact" });
 
   query = query.range(start, end);
 

@@ -125,13 +125,13 @@ route.post("/refresh-access-token", async (req, res) => {
 
     const decoded = await verifyRefreshToken(req.body?.refreshToken);
 
-    const access_token = await generateAccessToken({
+    const accessToken = await generateAccessToken({
       id: decoded.payload.id,
       email: decoded.payload.email,
       role_id: decoded.payload.role_id,
     });
 
-    return useResponse(res, { data: { access_token } });
+    return useResponse(res, { data: { accessToken } });
   } catch (err) {
     if (err.name === "ValidationError") {
       return useResponse(res, { code: 400, message: err.errors[0] });
