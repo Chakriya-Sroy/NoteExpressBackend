@@ -5,6 +5,7 @@ import routeProfile from "./routes/profile.route.js";
 import routeUsers from "./routes/users.route.js";
 import routeActivityLog from "./routes/activity-log.route.js";
 import { useResponse } from "./utils/response.js";
+import routeRole from "./routes/role.route.js";
 import cors from "cors";
 dotev.config();
 
@@ -28,6 +29,8 @@ app.use("/api/profile", routeProfile);
 app.use("/api/users", routeUsers);
 
 app.use("/api/activity-log",routeActivityLog);
+
+app.use("/api/roles",routeRole);
 
 app.use((req, res) => {
   return useResponse(res, { code: 404, message: "Route not found" });
