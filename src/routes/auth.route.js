@@ -68,7 +68,7 @@ route.post("/login", async (req, res) => {
   try {
     // Validate Input
     await AuthSchema.validate(req.body);
-    
+
     const { email, password } = req.body;
     // Check if User Exists
     const existingUser = await findUserByEmail(email);
@@ -129,7 +129,8 @@ route.post("/refresh-access-token", async (req, res) => {
       id: decoded.payload.id,
       email: decoded.payload.email,
       role_id: decoded.payload.role_id,
-      permission:decoded.payload.permissions
+      username: decoded.payload.username,
+      permission: decoded.payload.permissions,
     });
 
     return useResponse(res, { data: { accessToken } });

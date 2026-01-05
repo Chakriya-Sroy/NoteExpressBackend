@@ -14,7 +14,7 @@ export const AuthenticateMiddlware = async (req, res, next) => {
     const { payload } = await verifyAccessToken(token);
 
     req.user = payload;
-
+    
     // Admin
     if (payload?.data?.role_id == 1) {
       next();
