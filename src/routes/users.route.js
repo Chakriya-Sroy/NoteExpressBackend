@@ -20,6 +20,7 @@ import {
 } from "../constants/action.constant.js";
 import { AuthSchema } from "../schema/auth.schema.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+import { RateLimitMiddleware } from "../middlewares/rate-limit.middleware.js";
 
 const route = express.Router();
 
@@ -39,7 +40,7 @@ route.get("/", async (req, res) => {
   }
 });
 
-route.post("", async (req, res) => {
+route.post("", RateLimitMiddleware, async (req, res) => {
   try {
     await AuthSchema.validate(req.body);
 
@@ -98,6 +99,7 @@ route.put(
   "/deactivate-user/:id",
   AuthenticateMiddlware,
   AdminPermissionsMiddleware,
+  RateLimitMiddleware,
   async (req, res) => {
     const id = req.params.id;
 
@@ -154,6 +156,7 @@ route.put(
   "/activate-user/:id",
   AuthenticateMiddlware,
   AdminPermissionsMiddleware,
+  RateLimitMiddleware,
   async (req, res) => {
     const id = req.params.id;
 
@@ -210,6 +213,7 @@ route.put(
   "/reset-password",
   AuthenticateMiddlware,
   AdminPermissionsMiddleware,
+  RateLimitMiddleware,
   async (req, res) => {
     const id = req.body?.user_id;
 

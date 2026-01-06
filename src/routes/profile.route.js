@@ -9,6 +9,7 @@ import {
   ActivityLogAction,
   ActivityLogModule,
 } from "../constants/action.constant.js";
+import { RateLimitMiddleware } from "../middlewares/rate-limit.middleware.js";
 
 const route = express.Router();
 
@@ -22,7 +23,7 @@ route.get("", async (req, res) => {
 });
 
 // Change Password
-route.put("/change-password", async (req, res) => {
+route.put("/change-password",RateLimitMiddleware, async (req, res) => {
   try {
     await ChangePasswordSchema.validate(req.body, { abortEarly: false });
 

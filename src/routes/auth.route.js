@@ -13,8 +13,11 @@ import {
   ActivityLogAction,
   ActivityLogModule,
 } from "../constants/action.constant.js";
+import { RateLimitMiddleware } from "../middlewares/rate-limit.middleware.js";
 
 const route = express.Router();
+
+route.use(RateLimitMiddleware);
 
 route.post("/signin", async (req, res) => {
   // Validate Input
