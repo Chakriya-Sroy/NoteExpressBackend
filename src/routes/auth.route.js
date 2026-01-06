@@ -30,6 +30,15 @@ route.post("/signin", async (req, res) => {
       });
     }
 
+    const existingUsername = await findUserByUsername(username);
+
+    if (existingUsername) {
+      return useResponse(res, {
+        code: 400,
+        message: "User already exists with this username",
+      });
+    }
+
     const password_hash = await hashPassword(password);
 
     const newUser = await insertUser({

@@ -6,7 +6,9 @@ import {
   deactivateUser,
   findUserByEmail,
   findUserById,
+  findUserByUsername,
   getAllUsers,
+  insertUser,
   resetUserPassword,
 } from "../models/user.model.js";
 import { hashPassword } from "../utils/password.js";
@@ -39,20 +41,29 @@ route.get("/", async (req, res) => {
 
 route.post("", async (req, res) => {
   try {
+    await AuthSchema.validate(req.body);
 
-    await AuthSchema(req.body);
-    const existingUser = await findUserByEmail(email);
+    const { email, username, password } = req.body;
 
-    if (existingUser) {
+    const existingEmail = await findUserByEmail(email);
+
+    if (existingEmail) {
       return useResponse(res, {
         code: 400,
-        message: "User already exists with this email",
+        message: "User already exists with that email",
       });
     }
 
-    const password=req?.body?.password ?? 'Default@123';
-    
-    const password_hash = await hashPassword(password);
+    const existingUsername = await findUserByUsername(username);
+
+    if (existingUsername) {
+      return useResponse(res, {
+        code: 400,
+        message: "User already exists with that username",
+      });
+    }
+
+    const password_hash = await hashPassword(password ?? "Default@124");
 
     const newUser = await insertUser({
       email,
@@ -68,7 +79,7 @@ route.post("", async (req, res) => {
     });
 
     return useResponse(res, {
-      message: "Signin successfully",
+      message: "Create user successfully",
       data: newUser,
     });
   } catch (err) {

@@ -13,6 +13,19 @@ export const findUserByEmail = async (email) => {
   return data;
 };
 
+export const findUserByUsername=async(username)=>{
+   const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (error) {
+    return null;
+  }
+  return data;
+}
+
 export const findUserById = async (id) => {
   const { data, error } = await supabase
     .from("users")
@@ -58,7 +71,7 @@ export const insertUser = async (user) => {
   const { data, error } = await supabase
     .from("users")
     .insert([user])
-    .select()
+    .select('id,username,email,role_id,status,created_at,updated_at')
     .single();
 
   if (error) {
