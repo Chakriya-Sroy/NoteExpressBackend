@@ -11,7 +11,7 @@ dotev.config();
 
 const allowedOrigins = [
   "http://localhost:3001",
-  "https://qr-attendance-kwl6.vercel.app",
+  "https://scan-to-go.vercel.app",
 ];
 
 const app = express();
