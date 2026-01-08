@@ -30,11 +30,14 @@ export const getActivityLog = async (routeQuery) => {
   const start = (pageNumber - 1) * pageSize;
   const end = start + pageSize - 1;
 
-  let query = supabase.from("activity_logs").select("*,users(username)", { count: "exact" });
+  let query = supabase
+    .from("activity_logs")
+    .select("*,users(username)", { count: "exact" })
+    .order("created_at", { ascending: false });
 
   query = query.range(start, end);
 
-  const { data, count,error } = await query;
+  const { data, count, error } = await query;
 
   const meta = {
     currentPage: pageNumber,
@@ -47,5 +50,5 @@ export const getActivityLog = async (routeQuery) => {
     throw error;
   }
   console.log("data", {});
-  return {data,meta};
+  return { data, meta };
 };

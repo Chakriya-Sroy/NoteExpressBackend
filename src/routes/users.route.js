@@ -3,6 +3,8 @@ import { AuthenticateMiddlware } from "../middlewares/authenticate.middleware.js
 import { AdminPermissionsMiddleware } from "../middlewares/permissions.middleware.js";
 import {
   activateUser,
+  checkDuplicateEmail,
+  checkDuplicateUsername,
   deactivateUser,
   findUserByEmail,
   findUserById,
@@ -10,6 +12,7 @@ import {
   getAllUsers,
   insertUser,
   resetUserPassword,
+  updateUser,
 } from "../models/user.model.js";
 import { hashPassword } from "../utils/password.js";
 import { useResponse } from "../utils/response.js";
@@ -21,6 +24,8 @@ import {
 import { AuthSchema } from "../schema/auth.schema.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
 import { RateLimitMiddleware } from "../middlewares/rate-limit.middleware.js";
+import { UpdateProfileSchema } from "../schema/profile.schema.js";
+import { ValidateRole } from "../models/role.model.js";
 
 const route = express.Router();
 
@@ -76,7 +81,7 @@ route.post("", RateLimitMiddleware, async (req, res) => {
     await RecordActivityLog({
       module: ActivityLogModule.AUTH,
       action: ActivityLogAction.AUTH_SIGNUP,
-      userId: newUser?.id,
+      userId: req.user?.id,
     });
 
     return useResponse(res, {
@@ -95,6 +100,93 @@ route.post("", RateLimitMiddleware, async (req, res) => {
   }
 });
 
+route.put("/:id", RateLimitMiddleware, async (req, res) => {
+  try {
+    const id = req.params?.id;
+
+    const user = await findUserById(id);
+
+    if (!user) {
+      return useResponse(res, {
+        code: 404,
+        message: "Can't find user with that id",
+      });
+    }
+    
+    if (req.body && Object.keys(req.body).length === 0) {
+      return useResponse(res, {
+        code: 400,
+        message: "No data provided for update",
+      });
+    }
+
+    await UpdateProfileSchema.validate(req.body);
+
+    const { email, username, role_id } = req.body;
+
+    if (email) {
+      const isDuplicateEmail = await checkDuplicateEmail({
+        user_id: id,
+        email: email,
+      });
+      if (isDuplicateEmail) {
+        return useResponse(res, {
+          code: 409,
+          message: "Email already exists",
+        });
+      }
+    }
+
+    if (username) {
+      const isDuplicateEmail = await checkDuplicateUsername({
+        user_id: id,
+        username: username,
+      });
+      if (isDuplicateEmail) {
+        return useResponse(res, {
+          code: 409,
+          message: "Username already exists",
+        });
+      }
+    }
+
+    if (role_id) {
+      const isValidRole = await ValidateRole(role_id);
+      if (!isValidRole) {
+        return useResponse(res, {
+          code: 422,
+          message: "There no role with that id",
+        });
+      }
+    }
+
+    const updatedUser = await updateUser({ ...req.body, id: id });
+
+    await RecordActivityLog({
+      module: ActivityLogModule.USER,
+      action: ActivityLogAction.USER_UPDATE,
+      userId: req.user?.id,
+      metadata: {
+        old: req.body,
+        new: updatedUser,
+      },
+    });
+
+    return useResponse(res, {
+      message: "Update user successfully",
+      data: updatedUser,
+    });
+  } catch (err) {
+    if (err.name === "ValidationError") {
+      return useResponse(res, { code: 400, message: err.errors[0] });
+    }
+
+    return useResponse(res, {
+      code: 500,
+      message: err?.message || "Internal Server Error",
+    });
+  }
+});
 route.put(
   "/deactivate-user/:id",
   AuthenticateMiddlware,
