@@ -101,109 +101,7 @@ route.post("", RateLimitMiddleware, async (req, res) => {
   }
 });
 
-route.put("/:id", RateLimitMiddleware, async (req, res) => {
-  try {
-    const id = req.params?.id;
 
-    const user = await findUserById(id);
-
-    if (!user) {
-      return useResponse(res, {
-        code: 404,
-        message: "Can't find user with that id",
-      });
-    }
- 
-    if(user?.role_id===1 && user?.username==='admin'){
-      return useResponse(res, {
-          code: 403,
-          message: "Can't update  admin user",
-        });
-    }
-    if (req.body && Object.keys(req.body).length === 0) {
-      return useResponse(res, {
-        code: 400,
-        message: "No data provided for update",
-      });
-    }
-
-    await UpdateProfileSchema.validate(req.body);
-
-    const { email, username, role_id } = req.body;
-
-    if (email) {
-      const isDuplicateEmail = await checkDuplicateEmail({
-        user_id: id,
-        email: email,
-      });
-      if (isDuplicateEmail) {
-        return useResponse(res, {
-          code: 409,
-          message: "Email already exists",
-        });
-      }
-    }
-
-    if (username) {
-      const isDuplicateEmail = await checkDuplicateUsername({
-        user_id: id,
-        username: username,
-      });
-      if (isDuplicateEmail) {
-        return useResponse(res, {
-          code: 409,
-          message: "Username already exists",
-        });
-      }
-    }
-
-    if (role_id) {
-      const isValidRole = await ValidateRole(role_id);
-      if (!isValidRole) {
-        return useResponse(res, {
-          code: 422,
-          message: "There no role with that id",
-        });
-      }
-    }
-
-    const updatedUser = await updateUser({ ...req.body, id: id });
-
-    const updatedData = {
-      old:{},
-      new:{}
-    };
-
-    for (const key in req.body) {
-      if (key in updatedUser) {
-        updatedData['new'][key] = updatedUser[key];
-        updatedData['old'][key]=user[key];
-      }
-    }
-
-
-    await RecordActivityLog({
-      module: ActivityLogModule.USER,
-      action: ActivityLogAction.USER_UPDATE,
-      userId: req.user?.id,
-      metadata: updatedData,
-    });
-
-    return useResponse(res, {
-      message: "Update user successfully",
-      data: updatedUser,
-    });
-  } catch (err) {
-    if (err.name === "ValidationError") {
-      return useResponse(res, { code: 400, message: err.errors[0] });
-    }
-
-    return useResponse(res, {
-      code: 500,
-      message: err?.message || "Internal Server Error",
-    });
-  }
-});
 route.put(
   "/deactivate-user/:id",
   AuthenticateMiddlware,
@@ -369,4 +267,107 @@ route.put(
   }
 );
 
+route.put("/:id", RateLimitMiddleware, async (req, res) => {
+  try {
+    const id = req.params?.id;
+
+    const user = await findUserById(id);
+
+    if (!user) {
+      return useResponse(res, {
+        code: 404,
+        message: "Can't find user with that id",
+      });
+    }
+ 
+    if(user?.role_id===1 && user?.username==='admin'){
+      return useResponse(res, {
+          code: 403,
+          message: "Can't update  admin user",
+        });
+    }
+    if (req.body && Object.keys(req.body).length === 0) {
+      return useResponse(res, {
+        code: 400,
+        message: "No data provided for update",
+      });
+    }
+
+    await UpdateProfileSchema.validate(req.body);
+
+    const { email, username, role_id } = req.body;
+
+    if (email) {
+      const isDuplicateEmail = await checkDuplicateEmail({
+        user_id: id,
+        email: email,
+      });
+      if (isDuplicateEmail) {
+        return useResponse(res, {
+          code: 409,
+          message: "Email already exists",
+        });
+      }
+    }
+
+    if (username) {
+      const isDuplicateEmail = await checkDuplicateUsername({
+        user_id: id,
+        username: username,
+      });
+      if (isDuplicateEmail) {
+        return useResponse(res, {
+          code: 409,
+          message: "Username already exists",
+        });
+      }
+    }
+
+    if (role_id) {
+      const isValidRole = await ValidateRole(role_id);
+      if (!isValidRole) {
+        return useResponse(res, {
+          code: 422,
+          message: "There no role with that id",
+        });
+      }
+    }
+
+    const updatedUser = await updateUser({ ...req.body, id: id });
+
+    const updatedData = {
+      old:{},
+      new:{}
+    };
+
+    for (const key in req.body) {
+      if (key in updatedUser) {
+        updatedData['new'][key] = updatedUser[key];
+        updatedData['old'][key]=user[key];
+      }
+    }
+
+
+    await RecordActivityLog({
+      module: ActivityLogModule.USER,
+      action: ActivityLogAction.USER_UPDATE,
+      userId: req.user?.id,
+      metadata: updatedData,
+    });
+
+    return useResponse(res, {
+      message: "Update user successfully",
+      data: updatedUser,
+    });
+  } catch (err) {
+    if (err.name === "ValidationError") {
+      return useResponse(res, { code: 400, message: err.errors[0] });
+    }
+
+    return useResponse(res, {
+      code: 500,
+      message: err?.message || "Internal Server Error",
+    });
+  }
+});
 export default route;
