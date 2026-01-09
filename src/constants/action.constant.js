@@ -6,7 +6,8 @@ export const ActivityLogAction = {
   USER_DEACTIVATED: "user.deactivated",
   USER_RESET_PASSWORD:"user.reset-password",
   USER_CREATE:"user.create",
-  USER_UPDATE:"user.update"
+  USER_UPDATE:"user.update",
+  USER_DELETE:"user.delete"
 };
 
 
