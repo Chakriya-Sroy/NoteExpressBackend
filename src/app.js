@@ -6,6 +6,7 @@ import routeUsers from "./routes/users.route.js";
 import routeActivityLog from "./routes/activity-log.route.js";
 import { useResponse } from "./utils/response.js";
 import routeRole from "./routes/role.route.js";
+import routeForm from "./routes/form.route.js";
 import cors from "cors";
 dotev.config();
 
@@ -18,6 +19,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: allowedOrigins, credentials: true }));
+
+
 app.use("/api/health", (req, res) => {
   return useResponse(res, { message: "API is healthy" });
 });
@@ -31,6 +34,9 @@ app.use("/api/users", routeUsers);
 app.use("/api/activity-log",routeActivityLog);
 
 app.use("/api/roles",routeRole);
+
+app.use("/api/forms",routeForm);
+
 
 app.use((req, res) => {
   return useResponse(res, { code: 404, message: "Route not found" });
