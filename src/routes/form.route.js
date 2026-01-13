@@ -1,7 +1,7 @@
 import express from "express";
 import { AuthenticateMiddlware } from "../middlewares/authenticate.middleware.js";
 import { AdminPermissionsMiddleware } from "../middlewares/permissions.middleware.js";
-import { deleteForm, getAllForms, InsertToForm, updateForm } from "../models/form.model.js";
+import { deleteForm, getAllForms, getFormById, InsertToForm, updateForm } from "../models/form.model.js";
 import { useResponse } from "../utils/response.js";
 import { FormSchema } from "../schema/form.schema.js";
 
@@ -49,6 +49,25 @@ route.post("/", async (req, res) => {
   }
 });
 
+
+
+route.get("/:id", async (req, res) => {
+  try {
+
+    const id=req.params?.id;
+    const data = await getFormById(id);
+
+    return useResponse(res, { data: data });
+
+  } catch (err) {
+
+    if (err.name === "ValidationError") {
+      return useResponse(res, { code: 400, message: err.errors[0] });
+    }
+
+    return useResponse(res, { code: 500, message: "Internal Server Error" });
+  }
+});
 
 route.put("/:id", async (req, res) => {
   try {

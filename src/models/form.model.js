@@ -32,7 +32,6 @@ export const updateForm = async (id, payload) => {
 };
 
 export const deleteForm = async (id) => {
-
   const { error } = await supabase.from("forms").delete().eq("id", id);
 
   if (error) {
@@ -41,16 +40,28 @@ export const deleteForm = async (id) => {
   }
 };
 
-
 export const getAllForms = async () => {
-  const { data, error } = await supabase
-    .from("forms")
-    .select("*");
+  const { data, error } = await supabase.from("forms").select("*");
 
   if (error) {
-    console.log('error',error)
+    console.log("error", error);
     throw error;
   }
-  
+
   return data ?? [];
+};
+
+export const getFormById = async (id) => {
+  const { data, error } = await supabase
+    .from("forms")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.log("error", error);
+    throw error;
+  }
+
+  return data ?? null;
 };
