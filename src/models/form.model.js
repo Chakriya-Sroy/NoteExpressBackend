@@ -18,7 +18,7 @@ export const InsertToForm = async (payload) => {
 export const updateForm = async (id, payload) => {
   const { data, error } = await supabase
     .from("forms")
-    .update(payload)
+    .update({ ...payload, updated_at: new Date().toISOString() })
     .eq("id", id)
     .select("*")
     .single();
@@ -41,7 +41,7 @@ export const deleteForm = async (id) => {
 };
 
 export const getAllForms = async () => {
-  const { data, error } = await supabase.from("forms").select("*");
+  const { data, error } = await supabase.from("forms").select("*").order("updated_at", { ascending: false });;
 
   if (error) {
     console.log("error", error);
