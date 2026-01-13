@@ -45,12 +45,12 @@ export const deleteForm = async (id) => {
 export const getAllForms = async () => {
   const { data, error } = await supabase
     .from("forms")
-    .select("*, form_fields (*)")
-    .maybeSingle();
+    .select("*");
 
   if (error) {
+    console.log('error',error)
     throw error;
   }
   
-  return data ?? null;
+  return data ?? [];
 };
