@@ -15,6 +15,7 @@ import {
   ActivityLogAction,
   ActivityLogModule,
 } from "../constants/action.constant.js";
+import { RecordActivityLog } from "../models/activity.model.js";
 
 const route = express.Router();
 
@@ -65,6 +66,8 @@ route.post("/", async (req, res) => {
       message: "Form create successfully",
     });
   } catch (err) {
+
+    console.log("this is err",err)
     if (err.name === "ValidationError") {
       return useResponse(res, { code: 400, message: err.errors[0] });
     }
