@@ -19,62 +19,67 @@ import { RecordActivityLog } from "../models/activity.model.js";
 
 const route = express.Router();
 
-route.use(AuthenticateMiddlware);
+route.get(
+  "/",
+  AuthenticateMiddlware,
+  AdminPermissionsMiddleware,
+  async (req, res) => {
+    try {
+      const result = await getOrSetCache("forms", async () => {
+        const data = await getAllForms();
+        return data;
+      });
 
-route.use(AdminPermissionsMiddleware);
+      return useResponse(res, { data: result });
+    } catch (err) {
+      if (err.name === "ValidationError") {
+        return useResponse(res, { code: 400, message: err.errors[0] });
+      }
 
-route.get("/", async (req, res) => {
-  try {
-    const result = await getOrSetCache("forms", async () => {
-      const data = await getAllForms();
-      return data;
-    });
-
-    return useResponse(res, { data: result });
-  } catch (err) {
-    if (err.name === "ValidationError") {
-      return useResponse(res, { code: 400, message: err.errors[0] });
+      return useResponse(res, {
+        code: 500,
+        message: err?.message ?? "Internal Server Error",
+      });
     }
-
-    return useResponse(res, {
-      code: 500,
-      message: err?.message ?? "Internal Server Error",
-    });
   }
-});
+);
 
-route.post("/", async (req, res) => {
-  try {
-    await FormSchema.validate(req.body);
+route.post(
+  "/",
+  AuthenticateMiddlware,
+  AdminPermissionsMiddleware,
+  async (req, res) => {
+    try {
+      await FormSchema.validate(req.body);
 
-    const user_id = req.user?.id;
-    const payload = { ...req.body, user_id: user_id };
-    const data = await InsertToForm(payload);
+      const user_id = req.user?.id;
+      const payload = { ...req.body, user_id: user_id };
+      const data = await InsertToForm(payload);
 
-    // update cache
-    await clearCache("forms");
+      // update cache
+      await clearCache("forms");
 
-    // record activity logs
-    await RecordActivityLog({
-      module: ActivityLogModule.FORM,
-      action: ActivityLogAction.FORM_CREATE,
-      userId: req.user?.id,
-    });
+      // record activity logs
+      await RecordActivityLog({
+        module: ActivityLogModule.FORM,
+        action: ActivityLogAction.FORM_CREATE,
+        userId: req.user?.id,
+      });
 
-    return useResponse(res, {
-      data: data,
-      message: "Form create successfully",
-    });
-  } catch (err) {
+      return useResponse(res, {
+        data: data,
+        message: "Form create successfully",
+      });
+    } catch (err) {
+      console.log("this is err", err);
+      if (err.name === "ValidationError") {
+        return useResponse(res, { code: 400, message: err.errors[0] });
+      }
 
-    console.log("this is err",err)
-    if (err.name === "ValidationError") {
-      return useResponse(res, { code: 400, message: err.errors[0] });
+      return useResponse(res, { code: 500, message: "Internal Server Error" });
     }
-
-    return useResponse(res, { code: 500, message: "Internal Server Error" });
   }
-});
+);
 
 route.get("/:id", async (req, res) => {
   try {
@@ -83,15 +88,14 @@ route.get("/:id", async (req, res) => {
       return await getFormById(id);
     });
 
-    
     // const data = await getFormById(id);
 
     return useResponse(res, { data: data });
   } catch (err) {
-    if(err?.code=='22P02'){
-      return useResponse(res,{code:404,message:'Invalid Form'})
+    if (err?.code == "22P02") {
+      return useResponse(res, { code: 404, message: "Invalid Form" });
     }
-    console.log("heee",err)
+    console.log("heee", err);
     if (err.name === "ValidationError") {
       return useResponse(res, { code: 400, message: err.errors[0] });
     }
@@ -100,63 +104,73 @@ route.get("/:id", async (req, res) => {
   }
 });
 
-route.put("/:id", async (req, res) => {
-  try {
-    await FormSchema.validate(req.body);
+route.put(
+  "/:id",
+  AuthenticateMiddlware,
+  AdminPermissionsMiddleware,
+  async (req, res) => {
+    try {
+      await FormSchema.validate(req.body);
 
-    const id = req.params?.id;
-    const user_id = req.user?.id;
-    const payload = { ...req.body, user_id: user_id };
+      const id = req.params?.id;
+      const user_id = req.user?.id;
+      const payload = { ...req.body, user_id: user_id };
 
-    const data = await updateForm(id, payload);
+      const data = await updateForm(id, payload);
 
-    // Update Cache
-    await updateCache(`forms-${id}`, data);
-    await clearCache("forms");
+      // Update Cache
+      await updateCache(`forms-${id}`, data);
+      await clearCache("forms");
 
-    // record activity logs
-    await RecordActivityLog({
-      module: ActivityLogModule.FORM,
-      action: ActivityLogAction.FORM_UPDATE,
-      userId: req.user?.id,
-    });
+      // record activity logs
+      await RecordActivityLog({
+        module: ActivityLogModule.FORM,
+        action: ActivityLogAction.FORM_UPDATE,
+        userId: req.user?.id,
+      });
 
-    return useResponse(res, {
-      data: data,
-      message: "Form update successfully",
-    });
-  } catch (err) {
-    if (err.name === "ValidationError") {
-      return useResponse(res, { code: 400, message: err.errors[0] });
+      return useResponse(res, {
+        data: data,
+        message: "Form update successfully",
+      });
+    } catch (err) {
+      if (err.name === "ValidationError") {
+        return useResponse(res, { code: 400, message: err.errors[0] });
+      }
+
+      return useResponse(res, { code: 500, message: "Internal Server Error" });
     }
-
-    return useResponse(res, { code: 500, message: "Internal Server Error" });
   }
-});
+);
 
-route.delete("/:id", async (req, res) => {
-  try {
-    const id = req.params?.id;
+route.delete(
+  "/:id",
+  AuthenticateMiddlware,
+  AdminPermissionsMiddleware,
+  async (req, res) => {
+    try {
+      const id = req.params?.id;
 
-    await deleteForm(id);
-    await clearCache(`forms-${id}`);
-    await clearCache("forms");
+      await deleteForm(id);
+      await clearCache(`forms-${id}`);
+      await clearCache("forms");
 
-    // record activity logs
-    await RecordActivityLog({
-      module: ActivityLogModule.FORM,
-      action: ActivityLogAction.FORM_DELETE,
-      userId: req.user?.id,
-    });
+      // record activity logs
+      await RecordActivityLog({
+        module: ActivityLogModule.FORM,
+        action: ActivityLogAction.FORM_DELETE,
+        userId: req.user?.id,
+      });
 
-    return useResponse(res, { message: "Form delete successfully" });
-  } catch (err) {
-    if (err.name === "ValidationError") {
-      return useResponse(res, { code: 400, message: err.errors[0] });
+      return useResponse(res, { message: "Form delete successfully" });
+    } catch (err) {
+      if (err.name === "ValidationError") {
+        return useResponse(res, { code: 400, message: err.errors[0] });
+      }
+
+      return useResponse(res, { code: 500, message: "Internal Server Error" });
     }
-
-    return useResponse(res, { code: 500, message: "Internal Server Error" });
   }
-});
+);
 
 export default route;
