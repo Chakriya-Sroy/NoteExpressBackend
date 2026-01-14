@@ -3,7 +3,7 @@ import supabase from "../configs/supabase.js";
 export const InsertToForm = async (payload) => {
   const { data, error } = await supabase
     .from("forms")
-    .insert(payload)
+    .insert({...payload, updated_at: new Date().toISOString()})
     .select("*")
     .single();
 
@@ -41,7 +41,7 @@ export const deleteForm = async (id) => {
 };
 
 export const getAllForms = async () => {
-  const { data, error } = await supabase.from("forms").select("*").order("updated_at", { ascending: false });;
+  const { data, error } = await supabase.from("forms").select("*").order("updated_at", { ascending: false });
 
   if (error) {
     console.log("error", error);
