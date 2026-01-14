@@ -11,6 +11,10 @@ import {
 import { useResponse } from "../utils/response.js";
 import { FormSchema } from "../schema/form.schema.js";
 import { getOrSetCache, clearCache, updateCache } from "../configs/radis.js";
+import {
+  ActivityLogAction,
+  ActivityLogModule,
+} from "../constants/action.constant.js";
 
 const route = express.Router();
 
@@ -45,9 +49,16 @@ route.post("/", async (req, res) => {
     const user_id = req.user?.id;
     const payload = { ...req.body, user_id: user_id };
     const data = await InsertToForm(payload);
-    
+
     // update cache
     await clearCache("forms");
+
+    // record activity logs
+    await RecordActivityLog({
+      module: ActivityLogModule.FORM,
+      action: ActivityLogAction.FORM_CREATE,
+      userId: req.user?.id,
+    });
 
     return useResponse(res, {
       data: data,
@@ -94,6 +105,13 @@ route.put("/:id", async (req, res) => {
     await updateCache(`forms-${id}`, data);
     await clearCache("forms");
 
+    // record activity logs
+    await RecordActivityLog({
+      module: ActivityLogModule.FORM,
+      action: ActivityLogAction.FORM_UPDATE,
+      userId: req.user?.id,
+    });
+
     return useResponse(res, {
       data: data,
       message: "Form update successfully",
@@ -114,6 +132,13 @@ route.delete("/:id", async (req, res) => {
     await deleteForm(id);
     await clearCache(`forms-${id}`);
     await clearCache("forms");
+
+    // record activity logs
+    await RecordActivityLog({
+      module: ActivityLogModule.FORM,
+      action: ActivityLogAction.FORM_DELETE,
+      userId: req.user?.id,
+    });
 
     return useResponse(res, { message: "Form delete successfully" });
   } catch (err) {
