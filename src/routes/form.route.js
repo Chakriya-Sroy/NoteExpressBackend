@@ -10,7 +10,7 @@ import {
 } from "../models/form.model.js";
 import { useResponse } from "../utils/response.js";
 import { FormSchema } from "../schema/form.schema.js";
-import getOrSetCache, { clearCache, updateCache } from "../configs/radis.js";
+import  {getOrSetCache, clearCache, updateCache } from "../configs/radis.js";
 
 const route = express.Router();
 
