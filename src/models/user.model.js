@@ -82,9 +82,11 @@ export const insertUser = async (user) => {
 };
 
 export const updateUser = async (user) => {
+  const { password, ...userWithoutPassword } = user;
+
   const { data, error } = await supabase
     .from("users")
-    .update(user)
+    .update(userWithoutPassword)
     .eq("id", user?.id)
     .select("id,username,email,role_id,status,created_at,updated_at")
     .single();
@@ -231,13 +233,10 @@ export const checkDuplicateUsername = async ({ user_id, username }) => {
   return data;
 };
 
-export const deleteUser=async(id)=>{
- const { error } = await supabase
-  .from("users")
-  .delete()
-  .eq("id", id); 
+export const deleteUser = async (id) => {
+  const { error } = await supabase.from("users").delete().eq("id", id);
 
-  if(error){
+  if (error) {
     throw error;
   }
-}
+};
