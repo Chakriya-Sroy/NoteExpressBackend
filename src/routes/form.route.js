@@ -82,10 +82,16 @@ route.get("/:id", async (req, res) => {
     const data = await getOrSetCache(`forms-${id}`, async () => {
       return await getFormById(id);
     });
+
+    
     // const data = await getFormById(id);
 
     return useResponse(res, { data: data });
   } catch (err) {
+    if(err?.code=='22P02'){
+      return useResponse(res,{code:404,message:'Invalid Form'})
+    }
+    console.log("heee",err)
     if (err.name === "ValidationError") {
       return useResponse(res, { code: 400, message: err.errors[0] });
     }
