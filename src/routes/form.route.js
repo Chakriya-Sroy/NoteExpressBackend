@@ -10,7 +10,7 @@ import {
 } from "../models/form.model.js";
 import { useResponse } from "../utils/response.js";
 import { FormSchema } from "../schema/form.schema.js";
-import  {getOrSetCache, clearCache, updateCache } from "../configs/radis.js";
+import { getOrSetCache, clearCache, updateCache } from "../configs/radis.js";
 
 const route = express.Router();
 
@@ -45,7 +45,10 @@ route.post("/", async (req, res) => {
     const user_id = req.user?.id;
     const payload = { ...req.body, user_id: user_id };
     const data = await InsertToForm(payload);
+    
+    // update cache
     await clearCache("forms");
+
     return useResponse(res, {
       data: data,
       message: "Form create successfully",
@@ -84,11 +87,13 @@ route.put("/:id", async (req, res) => {
     const id = req.params?.id;
     const user_id = req.user?.id;
     const payload = { ...req.body, user_id: user_id };
-    //const data = await updateForm(id, payload);
-    const data = await updateCache(`forms-${id}`, async () => {
-      return updateForm(id, payload);
-    });
+
+    const data = await updateForm(id, payload);
+
+    // Update Cache
+    await updateCache(`forms-${id}`, data);
     await clearCache("forms");
+
     return useResponse(res, {
       data: data,
       message: "Form update successfully",
