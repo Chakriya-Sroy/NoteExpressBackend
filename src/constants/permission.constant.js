@@ -14,7 +14,15 @@ export const ACTIVITYLOG={
     VIEW:"activity_log:view"
 }
 
+export const FORM={
+  VIEW:"form:view",
+  CREATE:"form:create",
+  UPDATE:"form:update",
+  DELETE:"form:delete",
+}
+
 export const PERMISSIONS = [
   ...Object.values(USER),
-  ...Object.values(ACTIVITYLOG)
+  ...Object.values(ACTIVITYLOG),
+  ...Object.values(FORM)
 ]
