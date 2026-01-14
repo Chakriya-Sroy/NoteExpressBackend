@@ -3,9 +3,9 @@ import supabase from "../configs/supabase.js";
 export const InsertToForm = async (payload) => {
   const { data, error } = await supabase
     .from("forms")
-    .insert({...payload, updated_at: new Date().toISOString()})
+    .insert(payload)
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.log("err", error);
@@ -18,10 +18,10 @@ export const InsertToForm = async (payload) => {
 export const updateForm = async (id, payload) => {
   const { data, error } = await supabase
     .from("forms")
-    .update({ ...payload, updated_at: new Date().toISOString() })
+    .update(payload)
     .eq("id", id)
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.log("err", error);
@@ -41,7 +41,10 @@ export const deleteForm = async (id) => {
 };
 
 export const getAllForms = async () => {
-  const { data, error } = await supabase.from("forms").select("*").order("updated_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("forms")
+    .select("*")
+    .order("updated_at", { ascending: false });
 
   if (error) {
     console.log("error", error);
