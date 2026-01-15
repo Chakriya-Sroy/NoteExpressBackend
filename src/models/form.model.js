@@ -68,3 +68,19 @@ export const getFormById = async (id) => {
 
   return data ?? null;
 };
+
+export const isValidFormId = async (id) => {
+  const { data, error } = await supabase
+    .from("forms")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.log("error", error);
+    throw error;
+  }
+  
+  if (!data) throw new Error("Form not found");
+
+  return data;
+};

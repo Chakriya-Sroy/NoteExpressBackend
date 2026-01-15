@@ -7,6 +7,7 @@ import routeActivityLog from "./routes/activity-log.route.js";
 import { useResponse } from "./utils/response.js";
 import routeRole from "./routes/role.route.js";
 import routeForm from "./routes/form.route.js";
+import routeFormResponse from "./routes/form_response.route.js";
 import cors from "cors";
 dotev.config();
 
@@ -36,6 +37,8 @@ app.use("/api/activity-log",routeActivityLog);
 app.use("/api/roles",routeRole);
 
 app.use("/api/forms",routeForm);
+
+app.use("/api/form-responses",routeFormResponse);
 
 
 app.use((req, res) => {
