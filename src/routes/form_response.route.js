@@ -21,12 +21,14 @@ route.get(
   AdminPermissionsMiddleware,
   async (req, res) => {
     try {
-      const data = await getOrSetCache("form_responses", async () => {
-        const data = await getAllFormRespones();
-        return data;
-      });
+      const data = await getOrSetCache(
+        `form_responses_${req?.params?.form_id}`,
+        async () => {
+          const data = await getAllFormRespones();
+          return data;
+        },
+      );
       return useResponse(res, { sucess: true, data: data });
-      
     } catch (err) {
       console.log("error", err);
       return useResponse(res, {
@@ -54,7 +56,8 @@ route.post("/", async (req, res) => {
     const { data } = await insertFormResponse(req.body);
 
     await clearCache("form_responses");
-
+    await clearCache("forms");
+    
     return useResponse(res, {
       message: "Form Submitt Succesfully",
       data: data,
