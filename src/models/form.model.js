@@ -1,3 +1,4 @@
+import { clearCache } from "../configs/radis.js";
 import supabase from "../configs/supabase.js";
 
 export const InsertToForm = async (payload) => {
@@ -43,15 +44,23 @@ export const deleteForm = async (id) => {
 export const getAllForms = async () => {
   const { data, error } = await supabase
     .from("forms")
-    .select("*")
+    .select(
+      `
+    *,
+    responses:form_responses(count)
+  `
+    )
     .order("updated_at", { ascending: false });
 
   if (error) {
     console.log("error", error);
     throw error;
   }
-
-  return data ?? [];
+  const formsWithCount = data.map((form) => ({
+    ...form,
+    responses: form.responses?.[0]?.count || 0,
+  }));
+  return formsWithCount ?? [];
 };
 
 export const getFormById = async (id) => {
@@ -79,7 +88,7 @@ export const isValidFormId = async (id) => {
     console.log("error", error);
     throw error;
   }
-  
+
   if (!data) throw new Error("Form not found");
 
   return data;
