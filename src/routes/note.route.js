@@ -82,7 +82,7 @@ router.put("/:id", async (req, res) => {
     // Clear Radis Cache for user's notes
 
     await clearCache(`note_${noteId}_user_${req?.user?.id}`); // Specific Note
-    await clearCache(`notes_user_${req?.user?.id}`); // Note List
+    //await clearCache(`notes_user_${req?.user?.id}`); // Note List
 
     return useResponse(res, {
       message: "Note updated successfully",
@@ -114,7 +114,7 @@ router.delete("/:id", async (req, res) => {
     // Clear Radis Cache for user's notes
 
     await clearCache(`note_${noteId}_user_${req?.user?.id}`); // Specific Note
-    await clearCache(`notes_user_${req?.user?.id}`);
+   // await clearCache(`notes_user_${req?.user?.id}`);
 
     await DeleteNote(noteId, req.user?.id);
     return useResponse(res, {
