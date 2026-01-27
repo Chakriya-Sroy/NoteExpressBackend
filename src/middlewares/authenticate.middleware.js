@@ -14,21 +14,7 @@ export const AuthenticateMiddlware = async (req, res, next) => {
     const { payload } = await verifyAccessToken(token);
 
     req.user = payload;
-    
-    // Admin
-    if (payload?.data?.role_id == 1) {
-      next();
-    }
 
-    // Attach user info to request
-    const res = await getUserStatusById(payload?.data?.id);
-
-    if (res?.status && res?.status === "inactive") {
-      return useResponse(res, {
-        code: 404,
-        message: "Account is inactive. Please contact administrator.",
-      });
-    }
     next(); // move to the next handler
   } catch (err) {
     console.error("Token verification failed:", err);
