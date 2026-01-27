@@ -1,6 +1,10 @@
 import express from "express";
 import { AuthSchema, RefreshTokenSchema } from "../schema/auth.schema.js";
-import { findUserByEmail, insertUser } from "../models/user.model.js";
+import {
+  findUserByEmail,
+  findUserByUsername,
+  insertUser,
+} from "../models/user.model.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
 import {
   generateAccessToken,
@@ -8,11 +12,7 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt.js";
 import { useResponse } from "../utils/response.js";
-import { RecordActivityLog } from "../models/activity.model.js";
-import {
-  ActivityLogAction,
-  ActivityLogModule,
-} from "../constants/action.constant.js";
+
 import { RateLimitMiddleware } from "../middlewares/rate-limit.middleware.js";
 
 const route = express.Router();
@@ -23,7 +23,7 @@ route.post("/signin", async (req, res) => {
   // Validate Input
   try {
     await AuthSchema.validate(req.body);
-    const { email, password } = req.body;
+    const { email, password, username } = req.body;
     const existingUser = await findUserByEmail(email);
 
     if (existingUser) {
@@ -47,24 +47,18 @@ route.post("/signin", async (req, res) => {
     const newUser = await insertUser({
       email,
       password: password_hash,
-      role_id: req.body.role_id || 3,
       username: req.body.username || email.split("@")[0],
     });
 
     const access_token = await generateAccessToken(newUser);
     const refresh_token = await generateRefreshToken(newUser);
 
-    await RecordActivityLog({
-      module: ActivityLogModule.AUTH,
-      action: ActivityLogAction.AUTH_SIGNUP,
-      userId: newUser?.id,
-    });
-
     return useResponse(res, {
       message: "Signin successfully",
       data: { accessToken: access_token, refreshToken: refresh_token },
     });
   } catch (err) {
+    console.log("err", err);
     if (err.name === "ValidationError") {
       return useResponse(res, { code: 400, message: err.errors[0] });
     }
@@ -98,7 +92,7 @@ route.post("/login", async (req, res) => {
     // Verify Password
     const correctPassword = await verifyPassword(
       password,
-      existingUser.password
+      existingUser.password,
     );
 
     if (!correctPassword) {
@@ -108,12 +102,6 @@ route.post("/login", async (req, res) => {
     // Generate Tokens
     const access_token = await generateAccessToken(existingUser);
     const refresh_token = await generateRefreshToken(existingUser);
-
-    await RecordActivityLog({
-      module: ActivityLogModule.AUTH,
-      action: ActivityLogAction.AUTH_LOGIN,
-      userId: existingUser?.id,
-    });
 
     return useResponse(res, {
       message: "Login successful",
@@ -140,9 +128,7 @@ route.post("/refresh-access-token", async (req, res) => {
     const accessToken = await generateAccessToken({
       id: decoded.payload.id,
       email: decoded.payload.email,
-      role_id: decoded.payload.role_id,
       username: decoded.payload.username,
-      permission: decoded.payload.permissions,
     });
 
     return useResponse(res, { data: { accessToken } });

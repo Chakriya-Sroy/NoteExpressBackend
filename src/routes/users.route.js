@@ -18,16 +18,12 @@ import {
 
 import { hashPassword } from "../utils/password.js";
 import { useResponse } from "../utils/response.js";
-import { RecordActivityLog } from "../models/activity.model.js";
-import {
-  ActivityLogAction,
-  ActivityLogModule,
-} from "../constants/action.constant.js";
+
 import { AuthSchema } from "../schema/auth.schema.js";
-import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+
 import { RateLimitMiddleware } from "../middlewares/rate-limit.middleware.js";
 import { UpdateProfileSchema } from "../schema/profile.schema.js";
-import { ValidateRole } from "../models/role.model.js";
+
 
 const route = express.Router();
 
@@ -80,12 +76,6 @@ route.post("", RateLimitMiddleware, async (req, res) => {
       username: req.body.username || email.split("@")[0],
     });
 
-    await RecordActivityLog({
-      module: ActivityLogModule.AUTH,
-      action: ActivityLogAction.AUTH_SIGNUP,
-      userId: req.user?.id,
-    });
-
     return useResponse(res, {
       message: "Create user successfully",
       data: newUser,
@@ -135,20 +125,6 @@ route.put(
 
       await deactivateUser(existingUser?.email);
 
-      await RecordActivityLog({
-        module: ActivityLogModule.USER,
-        action: ActivityLogAction.USER_DEACTIVATED,
-        userId: req.user?.id,
-        metadata: {
-          old: {
-            status: existingUser?.status,
-          },
-          new: {
-            status: "inactive",
-          },
-        },
-      });
-
       return useResponse(res, { message: "User deactivated successfully" });
     } catch (err) {
       return useResponse(res, {
@@ -156,7 +132,7 @@ route.put(
         message: err?.message || "Internal Server Error",
       });
     }
-  }
+  },
 );
 
 route.put(
@@ -192,20 +168,6 @@ route.put(
 
       await activateUser(existingUser?.email);
 
-      await RecordActivityLog({
-        module: ActivityLogModule.USER,
-        action: ActivityLogAction.USER_ACTIVATED,
-        userId: req.user?.id,
-        metadata: {
-          old: {
-            status: existingUser?.status,
-          },
-          new: {
-            status: "active",
-          },
-        },
-      });
-
       return useResponse(res, { message: "User activated successfully" });
     } catch (err) {
       return useResponse(res, {
@@ -213,7 +175,7 @@ route.put(
         message: err?.message || "Internal Server Error",
       });
     }
-  }
+  },
 );
 
 route.put(
@@ -251,12 +213,6 @@ route.put(
 
       await resetUserPassword(existingUser?.id, newHashedPassword);
 
-      await RecordActivityLog({
-        module: ActivityLogModule.USER,
-        action: ActivityLogAction.USER_RESET_PASSWORD,
-        userId: req.user?.id,
-      });
-
       return useResponse(res, { message: "User password reset successfully" });
     } catch (err) {
       return useResponse(res, {
@@ -264,7 +220,7 @@ route.put(
         message: err?.message || "Internal Server Error",
       });
     }
-  }
+  },
 );
 
 route.put("/:id", RateLimitMiddleware, async (req, res) => {
@@ -347,13 +303,6 @@ route.put("/:id", RateLimitMiddleware, async (req, res) => {
       }
     }
 
-    await RecordActivityLog({
-      module: ActivityLogModule.USER,
-      action: ActivityLogAction.USER_UPDATE,
-      userId: req.user?.id,
-      metadata: updatedData,
-    });
-
     return useResponse(res, {
       message: "Update user successfully",
       data: updatedUser,
@@ -392,16 +341,9 @@ route.delete("/:id", RateLimitMiddleware, async (req, res) => {
 
     await deleteUser(id);
 
-    await RecordActivityLog({
-      module: ActivityLogModule.USER,
-      action: ActivityLogAction.USER_DELETE,
-      userId: req.user?.id,
-    });
-
     return useResponse(res, {
       message: "Delete user successfully",
     });
-    
   } catch (err) {
     if (err.name === "ValidationError") {
       return useResponse(res, { code: 400, message: err.errors[0] });

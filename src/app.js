@@ -3,11 +3,8 @@ import dotev from "dotenv";
 import routeAuth from "./routes/auth.route.js";
 import routeProfile from "./routes/profile.route.js";
 import routeUsers from "./routes/users.route.js";
-import routeActivityLog from "./routes/activity-log.route.js";
 import { useResponse } from "./utils/response.js";
-import routeRole from "./routes/role.route.js";
-import routeForm from "./routes/form.route.js";
-import routeFormResponse from "./routes/form_response.route.js";
+import routeFolder from "./routes/folder.route.js";
 import cors from "cors";
 dotev.config();
 
@@ -32,13 +29,7 @@ app.use("/api/profile", routeProfile);
 
 app.use("/api/users", routeUsers);
 
-app.use("/api/activity-log",routeActivityLog);
-
-// app.use("/api/roles",routeRole);
-
-// app.use("/api/forms",routeForm);
-
-// app.use("/api/form-responses",routeFormResponse);
+app.use("/api/folders", routeFolder);
 
 
 app.use((req, res) => {

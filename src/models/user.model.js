@@ -71,7 +71,7 @@ export const insertUser = async (user) => {
   const { data, error } = await supabase
     .from("users")
     .insert([user])
-    .select("id,username,email,role_id,status,created_at,updated_at")
+    .select("id,username,email,created_at,updated_at")
     .single();
 
   if (error) {
@@ -88,7 +88,7 @@ export const updateUser = async (user) => {
     .from("users")
     .update(userWithoutPassword)
     .eq("id", user?.id)
-    .select("id,username,email,role_id,status,created_at,updated_at")
+    .select("id,username,email,created_at,updated_at")
     .single();
 
   if (error) {
@@ -156,7 +156,7 @@ export const getAllUsers = async (routeQuery) => {
 
   let query = supabase
     .from("users")
-    .select("id, username, email, role_id,roles(role_name), status", {
+    .select("id, username, email,", {
       count: "exact",
     })
     .order("updated_at", { ascending: false });
