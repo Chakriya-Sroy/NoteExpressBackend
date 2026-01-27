@@ -102,12 +102,44 @@ router.delete("/:id", async (req, res) => {
       });
     }
 
-    await DeleteFolder(folderId,req.user?.id);
+    await DeleteFolder(folderId, req.user?.id);
 
     return useResponse(res, {
       message: "Folder deleted successfully",
     });
   } catch (err) {
+    return useResponse(res, {
+      code: 500,
+      message: err?.message || "Internal Server Error",
+    });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const folderId = req.params?.id;
+
+    if (!folderId) {
+      return useResponse(res, { code: 400, message: "Folder Id is required" });
+    }
+    // Verify Folder Id
+    const folder = await FindFolderById(folderId, req?.user?.id);
+
+    if (!folder) {
+      return useResponse(res, {
+        code: 404,
+        message: "Folder with that Id not found",
+      });
+    }
+
+    return useResponse(res, {
+      data: folder,
+    });
+    
+  } catch (err) {
+    if (err.name === "ValidationError") {
+      return useResponse(res, { code: 400, message: err.errors[0] });
+    }
     return useResponse(res, {
       code: 500,
       message: err?.message || "Internal Server Error",

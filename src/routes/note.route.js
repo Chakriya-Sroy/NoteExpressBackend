@@ -1,7 +1,13 @@
 import express from "express";
 import { AuthenticateMiddlware } from "../middlewares/authenticate.middleware.js";
 import { useResponse } from "../utils/response.js";
-import { CreateNote, DeleteNote, FindNoteById, GetNotesByUserId, UpdateNote } from "../models/note.model.js";
+import {
+  CreateNote,
+  DeleteNote,
+  FindNoteById,
+  GetNotesByUserId,
+  UpdateNote,
+} from "../models/note.model.js";
 import { NoteSchema } from "../schema/note.schema.js";
 
 const router = express.Router();
@@ -13,13 +19,13 @@ router.get("/", async (req, res) => {
     const data = await GetNotesByUserId(req.user.id);
     return useResponse(res, { code: 200, data });
   } catch (err) {
-    return useResponse(res, { code: 500, message: 'Internal Server Error' });
+    return useResponse(res, { code: 500, message: "Internal Server Error" });
   }
 });
 
 router.post("/", async (req, res) => {
   try {
-    await NoteSchema.validateSync(req.body,{ abortEarly: false });
+    await NoteSchema.validateSync(req.body, { abortEarly: false });
 
     const user_id = req?.user?.id;
     const payload = req?.body;
@@ -28,13 +34,12 @@ router.post("/", async (req, res) => {
 
     return useResponse(res, {
       message: "Note created successfully",
-      data: note
+      data: note,
     });
-
   } catch (err) {
     console.log(err);
     if (err.name === "ValidationError") {
-      return useResponse(res, { code: 400, message: err.errors.join(',') });
+      return useResponse(res, { code: 400, message: err.errors.join(",") });
     }
     return useResponse(res, {
       code: 500,
@@ -42,7 +47,6 @@ router.post("/", async (req, res) => {
     });
   }
 });
-
 
 router.put("/:id", async (req, res) => {
   try {
@@ -82,11 +86,9 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-
-
 router.delete("/:id", async (req, res) => {
   try {
-    const noteId= req.params?.id;
+    const noteId = req.params?.id;
     // Verify Folder Id
     const note = await FindNoteById(noteId, req?.user?.id);
 
@@ -97,7 +99,7 @@ router.delete("/:id", async (req, res) => {
       });
     }
 
-    await DeleteNote(noteId,req.user?.id);
+    await DeleteNote(noteId, req.user?.id);
     return useResponse(res, {
       message: "Note deleted successfully",
     });
@@ -109,5 +111,35 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+router.get("/:id", async (req, res) => {
+  try {
+    const noteId = req.params?.id;
 
+    if (!noteId) {
+      return useResponse(res, { code: 400, message: "Note Id is required" });
+    }
+
+    // Verify Note Id
+    const note = await FindNoteById(noteId, req?.user?.id);
+
+    if (!note) {
+      return useResponse(res, {
+        code: 404,
+        message: "Note with that Id not found",
+      });
+    }
+
+    return useResponse(res, {
+      data: note,
+    });
+  } catch (err) {
+    if (err.name === "ValidationError") {
+      return useResponse(res, { code: 400, message: err.errors[0] });
+    }
+    return useResponse(res, {
+      code: 500,
+      message: err?.message || "Internal Server Error",
+    });
+  }
+});
 export default router;

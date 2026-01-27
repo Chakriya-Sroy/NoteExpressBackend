@@ -11,7 +11,7 @@ export const generateAccessToken = async (user) => {
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("15m")
+    .setExpirationTime("24h")
     .sign(new TextEncoder().encode(process.env.ACCESS_TOKEN_SECRET));
 };
 

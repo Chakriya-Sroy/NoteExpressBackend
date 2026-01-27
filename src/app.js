@@ -10,8 +10,8 @@ import cors from "cors";
 dotev.config();
 
 const allowedOrigins = [
-  "http://localhost:5173/",
-  "https://note-with-vue.vercel.app/",
+  "http://localhost:5173",
+  "https://note-with-vue.vercel.app",
 ];
 
 const app = express();
