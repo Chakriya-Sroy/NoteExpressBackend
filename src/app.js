@@ -34,11 +34,11 @@ app.use("/api/users", routeUsers);
 
 app.use("/api/activity-log",routeActivityLog);
 
-app.use("/api/roles",routeRole);
+// app.use("/api/roles",routeRole);
 
-app.use("/api/forms",routeForm);
+// app.use("/api/forms",routeForm);
 
-app.use("/api/form-responses",routeFormResponse);
+// app.use("/api/form-responses",routeFormResponse);
 
 
 app.use((req, res) => {
