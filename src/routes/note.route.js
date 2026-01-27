@@ -9,6 +9,7 @@ import {
   UpdateNote,
 } from "../models/note.model.js";
 import { NoteSchema } from "../schema/note.schema.js";
+import { clearCache, getOrSetCache } from "../configs/radis.js";
 
 const router = express.Router();
 
@@ -16,7 +17,12 @@ router.use(AuthenticateMiddlware);
 
 router.get("/", async (req, res) => {
   try {
-    const data = await GetNotesByUserId(req.user.id);
+    const data = await getOrSetCache(
+      `notes_user_${req?.user?.id}`,
+      async () => {
+        return await GetNotesByUserId(req?.user?.id);
+      },
+    );
     return useResponse(res, { code: 200, data });
   } catch (err) {
     return useResponse(res, { code: 500, message: "Internal Server Error" });
@@ -31,6 +37,8 @@ router.post("/", async (req, res) => {
     const payload = req?.body;
 
     const note = await CreateNote(payload, user_id);
+    // Clear Radis Cache for user's notes
+    await clearCache(`notes_user_${req?.user?.id}`);
 
     return useResponse(res, {
       message: "Note created successfully",
@@ -71,6 +79,10 @@ router.put("/:id", async (req, res) => {
     }
 
     const updatedNote = await UpdateNote(noteId, payload);
+    // Clear Radis Cache for user's notes
+    await clearCache(`notes_user_${req?.user?.id}`); // Note List
+    await clearCache(`note_${noteId}_user_${req?.user?.id}`); // Specific Note
+
     return useResponse(res, {
       message: "Note updated successfully",
       data: updatedNote,
@@ -98,6 +110,9 @@ router.delete("/:id", async (req, res) => {
         message: "Note with that Id not found",
       });
     }
+    // Clear Radis Cache for user's notes
+    await clearCache(`notes_user_${req?.user?.id}`);
+    await clearCache(`note_${noteId}_user_${req?.user?.id}`); // Specific Note
 
     await DeleteNote(noteId, req.user?.id);
     return useResponse(res, {
@@ -120,7 +135,12 @@ router.get("/:id", async (req, res) => {
     }
 
     // Verify Note Id
-    const note = await FindNoteById(noteId, req?.user?.id);
+    const note = await getOrSetCache(
+      `note_${noteId}_user_${req?.user?.id}`,
+      async () => {
+        return await FindNoteById(noteId, req?.user?.id);
+      },
+    );
 
     if (!note) {
       return useResponse(res, {
