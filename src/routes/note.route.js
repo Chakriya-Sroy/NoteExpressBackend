@@ -9,22 +9,48 @@ import {
   UpdateNote,
 } from "../models/note.model.js";
 import { NoteSchema } from "../schema/note.schema.js";
-import { clearCache, getOrSetCache } from "../configs/radis.js";
+import { clearCache, clearCachePattern, getOrSetCache } from "../configs/radis.js";
 
 const router = express.Router();
 
 router.use(AuthenticateMiddlware);
 
+// Helper function to clear all note-related caches for a user
+const clearUserNoteCaches = async (userId, noteId = null) => {
+  try {
+    // Clear specific note cache if noteId provided
+    if (noteId) {
+      await clearCache(`note_${noteId}_user_${userId}`);
+    }
+    
+    await clearCachePattern(`notes_user_${userId}*`);
+    
+  } catch (err) {
+    console.error('Cache clearing error:', err);
+  }
+};
+
 router.get("/", async (req, res) => {
   try {
-    const data = await getOrSetCache(
-      `notes_user_${req?.user?.id}`,
-      async () => {
-        return await GetNotesByUserId(req?.user?.id);
-      },
-    );
+    const userId = req?.user?.id;
+    
+    // Generate cache key based on query parameters
+    const queryString = req.query && Object.keys(req.query).length > 0
+      ? `_query_${Object.entries(req.query)
+          .sort(([a], [b]) => a.localeCompare(b)) // Sort for consistent keys
+          .map(([k, v]) => `${k}_${v}`)
+          .join("_")}`
+      : '';
+    
+    const key = `notes_user_${userId}${queryString}`;
+        
+    const data = await getOrSetCache(key, async () => {
+      return await GetNotesByUserId(userId, req.query);
+    });
+    
     return useResponse(res, { code: 200, data });
   } catch (err) {
+    console.log("error", err);
     return useResponse(res, { code: 500, message: "Internal Server Error" });
   }
 });
@@ -37,8 +63,9 @@ router.post("/", async (req, res) => {
     const payload = req?.body;
 
     const note = await CreateNote(payload, user_id);
-    // Clear Radis Cache for user's notes
-    await clearCache(`notes_user_${req?.user?.id}`);
+    
+    // Clear all user note caches (including all query variations)
+    await clearUserNoteCaches(user_id);
 
     return useResponse(res, {
       message: "Note created successfully",
@@ -59,6 +86,7 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const noteId = req.params?.id;
+    const userId = req?.user?.id;
 
     if (!noteId) {
       return useResponse(res, { code: 400, message: "Note Id is required" });
@@ -69,7 +97,7 @@ router.put("/:id", async (req, res) => {
     const payload = req.body;
 
     // Verify Note Id
-    const oldNote = await FindNoteById(noteId, req?.user?.id);
+    const oldNote = await FindNoteById(noteId, userId);
 
     if (!oldNote) {
       return useResponse(res, {
@@ -79,10 +107,9 @@ router.put("/:id", async (req, res) => {
     }
 
     const updatedNote = await UpdateNote(noteId, payload);
-    // Clear Radis Cache for user's notes
-
-    await clearCache(`note_${noteId}_user_${req?.user?.id}`); // Specific Note
-    //await clearCache(`notes_user_${req?.user?.id}`); // Note List
+    
+    // Clear specific note cache and all list caches
+    await clearUserNoteCaches(userId, noteId);
 
     return useResponse(res, {
       message: "Note updated successfully",
@@ -102,8 +129,10 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const noteId = req.params?.id;
-    // Verify Folder Id
-    const note = await FindNoteById(noteId, req?.user?.id);
+    const userId = req?.user?.id;
+    
+    // Verify Note Id
+    const note = await FindNoteById(noteId, userId);
 
     if (!note) {
       return useResponse(res, {
@@ -111,12 +140,12 @@ router.delete("/:id", async (req, res) => {
         message: "Note with that Id not found",
       });
     }
-    // Clear Radis Cache for user's notes
+    
+    await DeleteNote(noteId, userId);
+    
+    // Clear specific note cache and all list caches
+    await clearUserNoteCaches(userId, noteId);
 
-    await clearCache(`note_${noteId}_user_${req?.user?.id}`); // Specific Note
-   // await clearCache(`notes_user_${req?.user?.id}`);
-
-    await DeleteNote(noteId, req.user?.id);
     return useResponse(res, {
       message: "Note deleted successfully",
     });
@@ -131,16 +160,17 @@ router.delete("/:id", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const noteId = req.params?.id;
+    const userId = req?.user?.id;
 
     if (!noteId) {
       return useResponse(res, { code: 400, message: "Note Id is required" });
     }
 
-    // Verify Note Id
+    // Get or set cache for specific note
     const note = await getOrSetCache(
-      `note_${noteId}_user_${req?.user?.id}`,
+      `note_${noteId}_user_${userId}`,
       async () => {
-        return await FindNoteById(noteId, req?.user?.id);
+        return await FindNoteById(noteId, userId);
       },
     );
 
@@ -164,4 +194,5 @@ router.get("/:id", async (req, res) => {
     });
   }
 });
+
 export default router;
