@@ -35,7 +35,7 @@ try {
   process.exit(1);
 }
 
-const EXPIRATION_DEFAULT = 1000 * 60 * 5; 
+const EXPIRATION_DEFAULT = 300; 
 
 const getOrSetCache = async (key, cb) => {
   try {

@@ -30,6 +30,7 @@ const clearUserNoteCaches = async (userId, noteId = null) => {
   }
 };
 
+// Get all notes
 router.get("/", async (req, res) => {
   try {
     const userId = req?.user?.id;
@@ -37,7 +38,7 @@ router.get("/", async (req, res) => {
     // Generate cache key based on query parameters
     const queryString = req.query && Object.keys(req.query).length > 0
       ? `_query_${Object.entries(req.query)
-          .sort(([a], [b]) => a.localeCompare(b)) // Sort for consistent keys
+          .sort(([a], [b]) => a.localeCompare(b))
           .map(([k, v]) => `${k}_${v}`)
           .join("_")}`
       : '';
@@ -48,6 +49,11 @@ router.get("/", async (req, res) => {
       return await GetNotesByUserId(userId, req.query);
     });
     
+    // Add browser cache headers
+    res.set({
+      'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+    });
+    
     return useResponse(res, { code: 200, data });
   } catch (err) {
     console.log("error", err);
@@ -55,6 +61,7 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Create note
 router.post("/", async (req, res) => {
   try {
     await NoteSchema.validateSync(req.body, { abortEarly: false });
@@ -64,7 +71,7 @@ router.post("/", async (req, res) => {
 
     const note = await CreateNote(payload, user_id);
     
-    // Clear all user note caches (including all query variations)
+    // Clear all user note caches
     await clearUserNoteCaches(user_id);
 
     return useResponse(res, {
@@ -83,6 +90,7 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Update note
 router.put("/:id", async (req, res) => {
   try {
     const noteId = req.params?.id;
@@ -126,6 +134,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// Delete note
 router.delete("/:id", async (req, res) => {
   try {
     const noteId = req.params?.id;
@@ -157,6 +166,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+// Get single note
 router.get("/:id", async (req, res) => {
   try {
     const noteId = req.params?.id;
@@ -180,6 +190,12 @@ router.get("/:id", async (req, res) => {
         message: "Note with that Id not found",
       });
     }
+
+    // Add browser cache headers with ETag
+    res.set({
+      'Cache-Control': 'private, max-age=300, stale-while-revalidate=600',
+      'ETag': `"${noteId}-${note.updated_at || note.created_at}"`,
+    });
 
     return useResponse(res, {
       data: note,
