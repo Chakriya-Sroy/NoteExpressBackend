@@ -55,7 +55,7 @@ router.get("/", async (req, res) => {
 
     // Add browser cache headers
     res.set({
-      "Cache-Control": "private, max-age=60, stale-while-revalidate=300",
+      "Cache-Control": "private, max-age=60, stale-while-revalidate=30",
     });
 
     return useResponse(res, { code: 200, data });
@@ -215,7 +215,7 @@ router.get("/:id", async (req, res) => {
 
     // Add browser cache headers with ETag
     res.set({
-      "Cache-Control": "private, max-age=300, stale-while-revalidate=600",
+      "Cache-Control": "private, max-age=300, stale-while-revalidate=30",
       ETag: `"${noteId}-${note.updated_at || note.created_at}"`,
     });
 
