@@ -58,7 +58,6 @@ router.get("/", async (req, res) => {
       "Clear-Site-Data": '"cache"', // Modern browsers
     });
 
-
     return useResponse(res, { code: 200, data });
   } catch (err) {
     console.log("error", err);
@@ -115,20 +114,29 @@ router.put("/:id", async (req, res) => {
 
     const payload = req.body;
 
-    // Verify Note Id
-    const oldNote = await FindNoteById(noteId, userId);
+    // // Verify Note Id
+    // const oldNote = await FindNoteById(noteId, userId);
 
-    if (!oldNote) {
+    // if (!oldNote) {
+    //   return useResponse(res, {
+    //     code: 404,
+    //     message: "Note with that Id not found",
+    //   });
+    // }
+
+    const updatedNote = await UpdateNote(noteId, userId, payload);
+
+    if (!updatedNote) {
       return useResponse(res, {
         code: 404,
         message: "Note with that Id not found",
       });
     }
 
-    const updatedNote = await UpdateNote(noteId,userId, payload);
-
     // Clear specific note cache and all list caches
-    await clearUserNoteCaches(userId, noteId);
+    clearUserNoteCaches(userId, noteId).catch(err => 
+      console.error("Cache clear error:", err)
+    );
 
     // Clear Broswer caches
     res.set({
@@ -140,6 +148,7 @@ router.put("/:id", async (req, res) => {
       message: "Note updated successfully",
       data: updatedNote,
     });
+    
   } catch (err) {
     if (err.name === "ValidationError") {
       return useResponse(res, { code: 400, message: err.errors[0] });
