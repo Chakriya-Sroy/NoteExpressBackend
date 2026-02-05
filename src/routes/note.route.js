@@ -125,7 +125,7 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    const updatedNote = await UpdateNote(noteId, payload);
+    const updatedNote = await UpdateNote(noteId,userId, payload);
 
     // Clear specific note cache and all list caches
     await clearUserNoteCaches(userId, noteId);

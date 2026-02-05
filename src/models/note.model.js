@@ -76,11 +76,12 @@ export const FindNoteByFolderId = async (folder_id, user_id) => {
   return data ?? [];
 };
 
-export const UpdateNote = async (id, payload) => {
+export const UpdateNote = async (id,user_id,payload) => {
   const { data, error } = await supabase
     .from("notes")
     .update({ updated_at: new Date(), ...payload })
     .eq("id", id)
+    .eq("user_id",user_id)
     .select()
     .single();
 
