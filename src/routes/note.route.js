@@ -53,10 +53,11 @@ router.get("/", async (req, res) => {
       return await GetNotesByUserId(userId, req.query);
     });
 
-    // Add browser cache headers
     res.set({
-      "Cache-Control": "private, max-age=60, stale-while-revalidate=30",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Clear-Site-Data": '"cache"', // Modern browsers
     });
+
 
     return useResponse(res, { code: 200, data });
   } catch (err) {
