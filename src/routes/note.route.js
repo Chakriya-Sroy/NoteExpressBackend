@@ -9,7 +9,11 @@ import {
   UpdateNote,
 } from "../models/note.model.js";
 import { NoteSchema } from "../schema/note.schema.js";
-import { clearCache, clearCachePattern, getOrSetCache } from "../configs/radis.js";
+import {
+  clearCache,
+  clearCachePattern,
+  getOrSetCache,
+} from "../configs/radis.js";
 
 const router = express.Router();
 
@@ -22,11 +26,10 @@ const clearUserNoteCaches = async (userId, noteId = null) => {
     if (noteId) {
       await clearCache(`note_${noteId}_user_${userId}`);
     }
-    
+
     await clearCachePattern(`notes_user_${userId}*`);
-    
   } catch (err) {
-    console.error('Cache clearing error:', err);
+    console.error("Cache clearing error:", err);
   }
 };
 
@@ -34,26 +37,27 @@ const clearUserNoteCaches = async (userId, noteId = null) => {
 router.get("/", async (req, res) => {
   try {
     const userId = req?.user?.id;
-    
+
     // Generate cache key based on query parameters
-    const queryString = req.query && Object.keys(req.query).length > 0
-      ? `_query_${Object.entries(req.query)
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([k, v]) => `${k}_${v}`)
-          .join("_")}`
-      : '';
-    
+    const queryString =
+      req.query && Object.keys(req.query).length > 0
+        ? `_query_${Object.entries(req.query)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([k, v]) => `${k}_${v}`)
+            .join("_")}`
+        : "";
+
     const key = `notes_user_${userId}${queryString}`;
-        
+
     const data = await getOrSetCache(key, async () => {
       return await GetNotesByUserId(userId, req.query);
     });
-    
+
     // Add browser cache headers
     res.set({
-      'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+      "Cache-Control": "private, max-age=60, stale-while-revalidate=300",
     });
-    
+
     return useResponse(res, { code: 200, data });
   } catch (err) {
     console.log("error", err);
@@ -70,9 +74,15 @@ router.post("/", async (req, res) => {
     const payload = req?.body;
 
     const note = await CreateNote(payload, user_id);
-    
+
     // Clear all user note caches
     await clearUserNoteCaches(user_id);
+
+    // Clear Broswer caches
+    res.set({
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Clear-Site-Data": '"cache"', // Modern browsers
+    });
 
     return useResponse(res, {
       message: "Note created successfully",
@@ -115,9 +125,15 @@ router.put("/:id", async (req, res) => {
     }
 
     const updatedNote = await UpdateNote(noteId, payload);
-    
+
     // Clear specific note cache and all list caches
     await clearUserNoteCaches(userId, noteId);
+
+    // Clear Broswer caches
+    res.set({
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Clear-Site-Data": '"cache"', // Modern browsers
+    });
 
     return useResponse(res, {
       message: "Note updated successfully",
@@ -139,7 +155,7 @@ router.delete("/:id", async (req, res) => {
   try {
     const noteId = req.params?.id;
     const userId = req?.user?.id;
-    
+
     // Verify Note Id
     const note = await FindNoteById(noteId, userId);
 
@@ -149,11 +165,17 @@ router.delete("/:id", async (req, res) => {
         message: "Note with that Id not found",
       });
     }
-    
+
     await DeleteNote(noteId, userId);
-    
+
     // Clear specific note cache and all list caches
     await clearUserNoteCaches(userId, noteId);
+
+    // Clear Broswer caches
+    res.set({
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Clear-Site-Data": '"cache"', // Modern browsers
+    });
 
     return useResponse(res, {
       message: "Note deleted successfully",
@@ -193,8 +215,8 @@ router.get("/:id", async (req, res) => {
 
     // Add browser cache headers with ETag
     res.set({
-      'Cache-Control': 'private, max-age=300, stale-while-revalidate=600',
-      'ETag': `"${noteId}-${note.updated_at || note.created_at}"`,
+      "Cache-Control": "private, max-age=300, stale-while-revalidate=600",
+      ETag: `"${noteId}-${note.updated_at || note.created_at}"`,
     });
 
     return useResponse(res, {
