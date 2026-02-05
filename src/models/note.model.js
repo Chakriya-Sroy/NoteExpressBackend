@@ -77,19 +77,27 @@ export const FindNoteByFolderId = async (folder_id, user_id) => {
 };
 
 export const UpdateNote = async (id,user_id,payload) => {
-  const { data, error } = await supabase
+    const updateData = {};
+  
+  if (payload.title !== undefined) updateData.title = payload.title;
+  if (payload.content !== undefined) updateData.content = payload.content;
+  if (payload.pinned !== undefined) updateData.pinned = payload.pinned;
+  
+  updateData.updated_at = new Date().toISOString();
+
+  // Don't fetch the updated row - just update it
+  const { error } = await supabase
     .from("notes")
-    .update({ updated_at: new Date(), ...payload })
+    .update(updateData)
     .eq("id", id)
-    .eq("user_id",user_id)
-    .select()
-    .single();
+    .eq("user_id", user_id);
 
   if (error) {
-    throw new Error("Error updatefolder");
+    throw new Error("Error updating note");
   }
 
-  return data ?? null;
+  // Return the updated data without querying again
+  return { id, user_id, ...payload, ...updateData };
 };
 
 export const DeleteNote = async (id, user_id) => {
