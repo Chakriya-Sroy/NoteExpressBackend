@@ -23,12 +23,23 @@ export const CreateNote = async (payload, user_id) => {
   return data ?? null;
 };
 
-export const GetNotesByUserId = async (user_id,routeQuery) => {
+export const GetNotesByUserId = async (user_id, routeQuery) => {
+  // User wants page 2, with 20 items per page
+  const page = routeQuery?.page || 1; // Current page (1, 2, 3...)
+  const perPage = routeQuery?.perPage || 10; // Items per page
+
+  // Calculate range
+  const start = (page - 1) * perPage; // Page 1: 0, Page 2: 20, Page 3: 40
+  const end = start + perPage - 1; // Page 1: 19, Page 2: 39, Page 3: 59
+
   let query = supabase
     .from("notes")
-    .select("*")
+    .select("id, title, content, pinned, created_at,updated_at", {
+      count: "exact",
+    })
     .eq("user_id", user_id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(start, end);
 
   if (routeQuery?.pinned) {
     query = query.eq("pinned", true);
@@ -38,13 +49,21 @@ export const GetNotesByUserId = async (user_id,routeQuery) => {
     query = query.like("title", `%${routeQuery?.search}%`);
   }
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
 
   if (error) {
-    throw new Error("Error fetching note");
+    throw error;
   }
 
-  return data ?? [];
+  return {
+    notes: data ?? [],
+    meta: {
+      limit: perPage,
+      page: page,
+      total: count ?? 0,
+      totalPages: Math.ceil(count / perPage),
+    },
+  };
 };
 
 export const FindNoteById = async (id, user_id) => {
@@ -76,13 +95,13 @@ export const FindNoteByFolderId = async (folder_id, user_id) => {
   return data ?? [];
 };
 
-export const UpdateNote = async (id,user_id,payload) => {
-    const updateData = {};
-  
+export const UpdateNote = async (id, user_id, payload) => {
+  const updateData = {};
+
   if (payload.title !== undefined) updateData.title = payload.title;
   if (payload.content !== undefined) updateData.content = payload.content;
   if (payload.pinned !== undefined) updateData.pinned = payload.pinned;
-  
+
   updateData.updated_at = new Date().toISOString();
 
   // Don't fetch the updated row - just update it

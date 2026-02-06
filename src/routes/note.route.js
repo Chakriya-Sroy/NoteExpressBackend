@@ -49,16 +49,18 @@ router.get("/", async (req, res) => {
 
     const key = `notes_user_${userId}${queryString}`;
 
-    const data = await getOrSetCache(key, async () => {
+    // Get Caches if exist
+    const { notes: data, meta } = await getOrSetCache(key, async () => {
       return await GetNotesByUserId(userId, req.query);
     });
 
+    // Clear browser caches
     res.set({
       "Cache-Control": "no-cache, no-store, must-revalidate",
       "Clear-Site-Data": '"cache"', // Modern browsers
     });
 
-    return useResponse(res, { code: 200, data });
+    return useResponse(res, { code: 200, data, meta });
   } catch (err) {
     console.log("error", err);
     return useResponse(res, { code: 500, message: "Internal Server Error" });
@@ -134,8 +136,8 @@ router.put("/:id", async (req, res) => {
     }
 
     // Clear specific note cache and all list caches
-    clearUserNoteCaches(userId, noteId).catch(err => 
-      console.error("Cache clear error:", err)
+    clearUserNoteCaches(userId, noteId).catch((err) =>
+      console.error("Cache clear error:", err),
     );
 
     // Clear Broswer caches
@@ -148,7 +150,6 @@ router.put("/:id", async (req, res) => {
       message: "Note updated successfully",
       data: updatedNote,
     });
-    
   } catch (err) {
     if (err.name === "ValidationError") {
       return useResponse(res, { code: 400, message: err.errors[0] });
