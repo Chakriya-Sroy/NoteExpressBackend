@@ -70,26 +70,26 @@ router.get("/", async (req, res) => {
 // Create note
 router.post("/", async (req, res) => {
   try {
+    // 1. Validate first (fast operation)
     await NoteSchema.validateSync(req.body, { abortEarly: false });
 
     const user_id = req?.user?.id;
     const payload = req?.body;
 
+    // 2. Create note (main operation)
     const note = await CreateNote(payload, user_id);
 
-    // Clear all user note caches
-    await clearUserNoteCaches(user_id);
+    // 3. Clear cache ASYNC (don't await) - fire and forget
+    clearUserNoteCaches(user_id).catch((err) =>
+      console.error("Cache clear failed:", err),
+    );
 
-    // Clear Broswer caches
-    res.set({
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-      "Clear-Site-Data": '"cache"', // Modern browsers
-    });
-
+    // 4. Return immediately
     return useResponse(res, {
       message: "Note created successfully",
       data: note,
     });
+    
   } catch (err) {
     console.log(err);
     if (err.name === "ValidationError") {

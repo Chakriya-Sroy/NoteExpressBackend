@@ -1,27 +1,26 @@
 import supabase from "../configs/supabase.js";
 
 export const CreateNote = async (payload, user_id) => {
-  console.log("payload", payload);
+  // Use returning clause instead of .select()
   const { data, error } = await supabase
     .from("notes")
-    .insert([
-      {
-        pinned: false,
-        ...payload,
-        user_id,
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-    ])
+    .insert({
+      pinned: false,
+      ...payload,
+      user_id,
+      created_at: new Date().toISOString(), // Use ISO string
+      updated_at: new Date().toISOString(),
+    })
     .select()
     .single();
 
   if (error) {
-    console.log("errror", error);
-    throw new Error("Error creating note");
+    console.error("Create note error:", error);
+    throw new Error(error.message || "Error creating note");
   }
-  return data ?? null;
-};
+  
+  return data;
+}
 
 export const GetNotesByUserId = async (user_id, routeQuery) => {
   // User wants page 2, with 20 items per page
