@@ -25,8 +25,8 @@ export const CreateNote = async (payload, user_id) => {
 
 export const GetNotesByUserId = async (user_id, routeQuery) => {
   // User wants page 2, with 20 items per page
-  const page = routeQuery?.page || 1; // Current page (1, 2, 3...)
-  const perPage = routeQuery?.perPage || 10; // Items per page
+  const page = Number(routeQuery?.page) || 1; // Current page (1, 2, 3...)
+  const perPage = Number(routeQuery?.limit) || 10; // Items per page
 
   // Calculate range
   const start = (page - 1) * perPage; // Page 1: 0, Page 2: 20, Page 3: 40
