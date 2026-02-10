@@ -1,5 +1,5 @@
 import express from "express";
-import { AuthSchema, RefreshTokenSchema } from "../schema/auth.schema.js";
+import { AuthSchema, RefreshTokenSchema, SignupSchema } from "../schema/auth.schema.js";
 import {
   findUserByEmail,
   findUserByUsername,
@@ -22,7 +22,7 @@ route.use(RateLimitMiddleware);
 route.post("/signin", async (req, res) => {
   // Validate Input
   try {
-    await AuthSchema.validate(req.body);
+    SignupSchema.validateSync(req.body, { abortEarly: false });
     const { email, password, username } = req.body;
     const existingUser = await findUserByEmail(email);
 
@@ -58,9 +58,9 @@ route.post("/signin", async (req, res) => {
       data: { accessToken: access_token, refreshToken: refresh_token },
     });
   } catch (err) {
-    console.log("err", err);
+
     if (err.name === "ValidationError") {
-      return useResponse(res, { code: 400, message: err.errors[0] });
+      return useResponse(res, { code: 400, message: err.errors.join(',') });
     }
 
     return useResponse(res, {
